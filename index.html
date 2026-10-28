@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="pt-BR">
 <!--
-  COI Forge v0.3.0 — arquivo único da aplicação.
-  Seções: estilos (<style>) · configuração padrão (#coi-defaults) · Store · DataHub · Widgets · Views · App
+  COI Forge v0.5.0 — arquivo único da aplicação.
+  Seções: estilos (<style>) · configuração padrão (#coi-defaults) · Store · Wall · DataHub · Widgets · Views · App
   Documentação completa: README.md
 -->
 <head>
@@ -85,6 +85,8 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 .nav button:hover, .page-list button:hover { background: #ffffff10; color: #fff; }
 .nav button.active { background: var(--accent); color: #fff; }
 .page-list button.active { background: #ffffff14; color: #fff; }
+.page-list a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 8px; color: var(--sidebar-text); text-decoration: none; }
+.page-list a:hover { background: #ffffff10; color: #fff; }
 .page-list small { margin-left: auto; font-size: 11px; background: #ffffff14; padding: 1px 7px; border-radius: 99px; }
 .ico { width: 18px; text-align: center; opacity: .9; }
 .nav-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #5f6b80; padding: 0 12px 6px; }
@@ -331,14 +333,15 @@ body.editing .view > .grid .w-body { pointer-events: none; user-select: none; }
 .field-inline select { width: auto; padding: 6px 8px; }
 .field-inline .check { margin: 0; }
 .wall-meta { font-size: 12px; margin-left: auto; }
-.wall-frame { background: #05070c; border-radius: 14px; padding: 14px; border: 1px solid #1c2433; }
+.wall-frame { background: var(--wallbg, #05070c); border-radius: 14px; padding: 14px; border: 1px solid #1c2433; }
 .wall {
-  display: grid; gap: 6px;
+  position: relative; display: grid; gap: var(--bezel, 6px); background: var(--wallbg, #05070c);
   grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-  aspect-ratio: calc(var(--cols) * 16) / calc(var(--rows) * 9);
-  max-height: calc(100vh - 220px); margin: 0 auto;
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  aspect-ratio: calc(var(--cols) * var(--ar, 16)) / calc(var(--rows) * var(--br, 9));
+  max-height: calc(100vh - 220px); max-width: 100%; margin: 0 auto;
 }
-.tile { position: relative; background: #0b111c; border: 2px solid #1b2232; border-radius: 4px; overflow: hidden; min-width: 0; min-height: 0; }
+.tile { position: relative; background: #0b111c; border: 1px solid #1b2232; border-radius: 3px; overflow: hidden; min-width: 0; min-height: 0; }
 .tile-screen { position: absolute; inset: 0; overflow: hidden; }
 .tile-label { position: absolute; top: 6px; left: 6px; z-index: 3; font-size: 10.5px; color: #cbd5e1; background: #000000a6; padding: 2px 7px; border-radius: 4px; max-width: calc(100% - 12px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile-label b { color: #fff; margin-right: 4px; }
@@ -353,7 +356,7 @@ body.editing .view > .grid .w-body { pointer-events: none; user-select: none; }
 .no-signal { position: absolute; inset: 0; display: grid; place-items: center; color: #475569; font: 600 12px ui-monospace, Consolas, monospace; letter-spacing: .2em;
   background: repeating-linear-gradient(45deg, #0b111c 0 10px, #0e1522 10px 20px); }
 .wall-frame:fullscreen { padding: 0; border: 0; border-radius: 0; display: grid; place-items: center; background: #000; }
-.wall-frame:fullscreen .wall { width: 100vw; max-height: 100vh; gap: 4px; }
+.wall-frame:fullscreen .wall { width: 100vw; max-height: 100vh; }
 .wall-frame:fullscreen .tile-select { display: none; }
 
 /* ---------- drawer / toast ---------- */
@@ -469,6 +472,121 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
   .src-meta { grid-template-columns: 1fr; }
 }
 
+/* =========================================================
+   v0.4 — layouts, playlists por tela, rotação e modo TV
+   ========================================================= */
+.wall-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+.wall-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.wall-row .grow { flex: 1; }
+.wall-row .check { margin: 0; }
+.wall-row .wall-meta { margin-left: auto; }
+.layout-select { min-width: 200px; max-width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); font-weight: 600; }
+.lbl { font-size: 12px; color: var(--muted); font-weight: 600; }
+.btn.sm { padding: 6px 10px; font-size: 12.5px; }
+.seg { display: inline-flex; flex-wrap: wrap; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-right: 1px solid var(--border); background: var(--surface); padding: 6px 10px; cursor: pointer; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { background: var(--accent-soft); }
+.seg button.active { background: var(--accent); color: #fff; }
+.tile-label .pl { color: #c4b5fd; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.tile-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #ffffff14; z-index: 3; }
+.tile-prog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
+.tile-tools { position: absolute; left: 6px; right: 6px; bottom: 8px; z-index: 4; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+.tile:hover .tile-tools, .tile:focus-within .tile-tools, body.editing .tile-tools { opacity: 1; }
+.tile-tools select, .tile-tools .pl-info, .tile-tools .pl-btn { font-size: 11.5px; padding: 4px 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172ae6; color: #e2e8f0; }
+.tile-tools select { flex: 1; min-width: 0; }
+.tile-tools .pl-info { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-tools .pl-btn { flex: none; cursor: pointer; }
+.tile-tools .pl-btn:hover { border-color: var(--accent); }
+.tile-layer { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .5s, visibility .5s; }
+.tile-layer.on { opacity: 1; visibility: visible; }
+.tile-screen.enter { animation: tileIn .5s ease; }
+@keyframes tileIn { from { opacity: 0; } to { opacity: 1; } }
+.pl-sum { font-size: 12px; margin: 0 0 12px; }
+.pl-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.pl-item { display: grid; grid-template-columns: 20px minmax(0, 1fr) 72px auto; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.pl-item .n { font-weight: 700; color: var(--muted); text-align: center; }
+.pl-item select, .pl-item input { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.pl-item .acts { display: flex; gap: 4px; }
+.icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+.rot-pill { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rot-pill:hover { border-color: var(--accent); }
+.rot-pages { display: grid; gap: 6px; margin: 0 0 14px; }
+.rot-pages .check { margin: 0; }
+.tv-exit { position: fixed; top: 14px; right: 14px; z-index: 70; opacity: 0; pointer-events: none; transition: opacity .2s; }
+body.tv.tv-ui .tv-exit { opacity: 1; pointer-events: auto; }
+body.tv { background: #000; overflow: hidden; }
+body.tv .app { display: block; }
+body.tv .sidebar, body.tv .topbar, body.tv .wall-controls { display: none !important; }
+body.tv .view { padding: 0; max-width: none; }
+body.tv .wall-frame { border: 0; border-radius: 0; padding: 0; min-height: 100vh; display: grid; place-items: center; background: #000; }
+body.tv .wall { width: min(100vw, calc(100vh * var(--cols) * var(--ar, 16) / (var(--rows) * var(--br, 9)))); max-height: 100vh; }
+body.tv .tile-tools { display: none; }
+body.tv .wall:not(.prog-tv) .tile-prog { display: none; }
+body.kiosk .sidebar, body.kiosk #editBtn, body.kiosk #themeBtn, body.kiosk .icon-btn.menu-btn { display: none !important; }
+body.kiosk .app { grid-template-columns: 1fr; }
+body.kiosk .view { max-width: none; }
+@media (max-width: 600px) {
+  .wall-row .layout-select { min-width: 0; flex: 1 1 calc(100% - 64px); }
+  .wall-row .grow { display: none; }
+  .rot-pill .t { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .pl-item { grid-template-columns: 20px minmax(0, 1fr) 64px; }
+  .pl-item .acts { grid-column: 2 / -1; justify-content: flex-end; }
+}
+/* =========================================================
+   v0.4.1 — editor de layout do videowall
+   ========================================================= */
+.wall-look { padding-top: 10px; border-top: 1px solid var(--border); }
+.wall-look .field-inline { gap: 8px; font-weight: 600; font-size: 12.5px; }
+.wall-look input[type="range"] { width: 110px; accent-color: var(--accent); }
+.wall-look input[type="color"] { width: 38px; height: 28px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); }
+.wall-look output { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 38px; }
+.editor-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; margin-bottom: var(--gap);
+  border-radius: var(--radius); border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); background: var(--accent-soft); }
+.editor-tag { font-size: 11px; font-weight: 800; letter-spacing: .12em; color: #fff; background: var(--accent); padding: 4px 9px; border-radius: 6px; }
+.editor-hint { flex: 1 1 380px; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.cell-empty { position: relative; display: grid; place-items: center; border-radius: 3px; min-width: 0; min-height: 0;
+  color: #475569; font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .2em;
+  background: repeating-linear-gradient(45deg, #0b111c 0 10px, #0e1522 10px 20px); }
+.cell-empty button { width: 44px; height: 44px; border-radius: 50%; border: 1px dashed #64748b; background: #0f172acc; color: #cbd5e1; font-size: 22px; cursor: pointer; }
+.cell-empty button:hover { border-color: var(--accent); color: #fff; background: var(--accent); }
+.wall-cells { position: absolute; inset: 0; display: grid; pointer-events: none; z-index: 5; gap: var(--bezel, 6px);
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); }
+.wall-cells i { border: 1px dashed #ffffff22; border-radius: 3px; }
+.span-tag { margin-left: 6px; font-size: 10px; color: #93c5fd; font-variant-numeric: tabular-nums; }
+.tile-label .t-title { outline: none; }
+.wall.is-editing .tile-label { z-index: 6; pointer-events: auto; }
+.wall.is-editing .t-title[contenteditable] { cursor: text; border-bottom: 1px dashed #93c5fd88; padding: 0 2px; }
+.wall.is-editing .t-title[contenteditable]:focus { background: #1e293b; border-bottom-color: #93c5fd; }
+.wall.is-editing .tile { cursor: grab; touch-action: none; }
+.wall.is-editing .tile-screen { pointer-events: none; }
+.wall.is-editing .tile:hover, .wall.is-editing .tile:focus-visible { border-color: color-mix(in srgb, var(--accent) 70%, #fff); outline: none; }
+.wall.is-editing .tile.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent); z-index: 4; }
+.wall.is-editing .tile.is-dragging { opacity: .45; }
+.tile-edit { position: absolute; top: 6px; right: 6px; z-index: 7; display: flex; gap: 4px; opacity: .0; transition: opacity .15s; }
+.wall.is-editing .tile:hover .tile-edit, .wall.is-editing .tile.is-selected .tile-edit, .wall.is-editing .tile:focus-within .tile-edit { opacity: 1; }
+.tile-edit button, .te-handle { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; border: 1px solid #334155; background: #0f172ae6; color: #e2e8f0; font-size: 12px; cursor: pointer; }
+.te-handle { cursor: grab; font-size: 14px; }
+.tile-edit button:hover, .te-handle:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+.te-resize { position: absolute; right: 2px; bottom: 2px; z-index: 7; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px 0 3px 0;
+  background: var(--accent); color: #fff; font-size: 13px; cursor: nwse-resize; touch-action: none; opacity: .85; }
+.wall-ghost { z-index: 8; pointer-events: none; border-radius: 4px; display: grid; place-items: center; font: 700 14px ui-monospace, Consolas, monospace; color: #fff; }
+.wall-ghost.ok { background: color-mix(in srgb, var(--good) 28%, transparent); border: 2px solid var(--good); }
+.wall-ghost.bad { background: color-mix(in srgb, var(--bad) 25%, transparent); border: 2px solid var(--bad); }
+.seams { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.seam { position: absolute; background: var(--wallbg, #05070c); }
+.seam.v { top: 0; bottom: 0; width: var(--bezel, 6px); transform: translateX(-50%); }
+.seam.h { left: 0; right: 0; height: var(--bezel, 6px); transform: translateY(-50%); }
+.geo-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.geo-row .field { margin-bottom: 6px; }
+.tile-hdr { align-self: end; margin-bottom: 18px; }
+@media (max-width: 600px) {
+  .seg button { flex: 1 1 auto; }
+  .wall-row .wall-meta { white-space: normal; }
+  .geo-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .editor-hint { display: none; }
+  .wall-look input[type="range"] { width: 80px; }
+}
 /* ---------- responsivo ---------- */
 @media (max-width: 1100px) {
   .view > .grid .widget.size-s { grid-column: span 6; }
@@ -534,11 +652,18 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
         <div id="pageList" class="page-list"></div>
       </div>
 
+      <div class="nav-section">
+        <span class="nav-label">Modelos</span>
+        <div class="page-list">
+          <a href="agro/index.html" title="COE Agro: telas prontas para cooperativas agroindustriais"><span class="ico">❖</span>COE Agro<small>modelo</small></a>
+        </div>
+      </div>
+
       <div class="sidebar-foot">
         <button type="button" class="live" id="liveToggle" aria-pressed="true">
           <span class="pulse" aria-hidden="true"></span><span id="liveLabel">Dados simulados</span>
         </button>
-        <small>v0.3.0</small>
+        <small>v0.5.0</small>
       </div>
     </aside>
 
@@ -551,6 +676,7 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
         </div>
         <div class="topbar-actions">
           <time class="clock" id="clock"></time>
+          <button type="button" class="rot-pill" id="rotPill" hidden><span aria-hidden="true">⟳</span><span class="t">Rotação</span></button>
           <button type="button" class="src-pill" id="srcPill"><span class="dot" aria-hidden="true"></span><span class="t">Fontes</span></button>
           <button type="button" class="icon-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></button>
           <button type="button" class="icon-btn" id="fullBtn" aria-label="Tela cheia" title="Modo apresentação"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
@@ -565,12 +691,13 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
   <div class="scrim" id="scrim" hidden></div>
   <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Painel de edição"></aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <button type="button" class="btn primary tv-exit" id="tvExit">✕ Sair do modo TV</button>
   <input type="file" id="importFile" accept="application/json,.json" hidden>
 
   <!-- Configuração padrão: edite este JSON para mudar o conteúdo inicial da plataforma -->
   <script id="coi-defaults" type="application/json">
 {
-  "version": 3,
+  "version": 5,
   "settings": {
     "name": "COI Forge",
     "subtitle": "Centro de Operações Integradas",
@@ -927,32 +1054,386 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
           }
         }
       ]
+    },
+    {
+      "id": "agro",
+      "name": "COE Agro",
+      "widgets": [
+        {
+          "id": "agro-geral",
+          "type": "embed",
+          "title": "COE Agro · Visão geral da unidade",
+          "w": 12,
+          "h": 7,
+          "props": {
+            "url": "agro/index.html?vw-embed=1&tela=geral"
+          }
+        },
+        {
+          "id": "agro-du",
+          "type": "embed",
+          "title": "COE Agro · Demais unidades",
+          "w": 6,
+          "h": 5,
+          "props": {
+            "url": "agro/index.html?vw-embed=1&tela=du-geral"
+          }
+        },
+        {
+          "id": "agro-cam",
+          "type": "embed",
+          "title": "COE Agro · Câmeras",
+          "w": 6,
+          "h": 5,
+          "props": {
+            "url": "agro/index.html?vw-embed=1&tela=cameras"
+          }
+        }
+      ]
     }
   ],
   "videowall": {
-    "rows": 2,
-    "cols": 3,
-    "labels": true,
-    "tiles": [
+    "activeLayout": "operacao-normal",
+    "layouts": [
       {
-        "source": "page:operacao"
+        "id": "operacao-normal",
+        "name": "Operação normal",
+        "rows": 2,
+        "cols": 4,
+        "labels": true,
+        "progressTv": false,
+        "aspect": "16:9",
+        "bezel": 6,
+        "seams": true,
+        "background": "#05070c",
+        "tiles": [
+          {
+            "id": "principal",
+            "x": 0,
+            "y": 0,
+            "w": 2,
+            "h": 2,
+            "title": "Visão operacional",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "page:operacao",
+                "duration": 30
+              },
+              {
+                "source": "page:executivo",
+                "duration": 20
+              }
+            ]
+          },
+          {
+            "id": "producao",
+            "x": 2,
+            "y": 0,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-line-1",
+                "duration": 30
+              },
+              {
+                "source": "widget:operacao:op-bar-1",
+                "duration": 15
+              }
+            ]
+          },
+          {
+            "id": "cameras",
+            "x": 3,
+            "y": 0,
+            "w": 1,
+            "h": 1,
+            "title": "Câmeras",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:seguranca:sg-cam-1",
+                "duration": 10
+              },
+              {
+                "source": "widget:seguranca:sg-cam-2",
+                "duration": 10
+              },
+              {
+                "source": "widget:seguranca:sg-cam-3",
+                "duration": 10
+              },
+              {
+                "source": "widget:seguranca:sg-cam-4",
+                "duration": 10
+              }
+            ]
+          },
+          {
+            "id": "alarmes",
+            "x": 2,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-alarms-1",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "sistemas",
+            "x": 3,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-status-1",
+                "duration": 20
+              },
+              {
+                "source": "widget:operacao:op-gauge-1",
+                "duration": 20
+              }
+            ]
+          }
+        ]
       },
       {
-        "source": "widget:operacao:op-line-1"
+        "id": "contingencia",
+        "name": "Contingência",
+        "rows": 2,
+        "cols": 2,
+        "labels": true,
+        "progressTv": false,
+        "aspect": "16:9",
+        "bezel": 6,
+        "seams": true,
+        "background": "#05070c",
+        "tiles": [
+          {
+            "id": "c1",
+            "x": 0,
+            "y": 0,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-alarms-1",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "x": 1,
+            "y": 0,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:seguranca:sg-alarms-1",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "c3",
+            "x": 0,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-status-1",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "c4",
+            "x": 1,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "page:seguranca",
+                "duration": 30
+              }
+            ]
+          }
+        ]
       },
       {
-        "source": "widget:seguranca:sg-cam-1"
+        "id": "reuniao-turno",
+        "name": "Reunião de turno",
+        "rows": 2,
+        "cols": 2,
+        "labels": true,
+        "progressTv": true,
+        "aspect": "16:9",
+        "bezel": 6,
+        "seams": true,
+        "background": "#05070c",
+        "tiles": [
+          {
+            "id": "r1",
+            "x": 0,
+            "y": 0,
+            "w": 2,
+            "h": 1,
+            "title": "Indicadores do turno",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "page:executivo",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "r2",
+            "x": 0,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:executivo:ex-table-1",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "r3",
+            "x": 1,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:operacao:op-line-1",
+                "duration": 30
+              },
+              {
+                "source": "widget:operacao:op-alarms-1",
+                "duration": 30
+              }
+            ]
+          }
+        ]
       },
       {
-        "source": "widget:operacao:op-alarms-1"
-      },
-      {
-        "source": "widget:operacao:op-status-1"
-      },
-      {
-        "source": "widget:seguranca:sg-cam-3"
+        "id": "sala-agro",
+        "name": "Sala COE Agro",
+        "rows": 2,
+        "cols": 3,
+        "aspect": "16:9",
+        "bezel": 6,
+        "seams": true,
+        "background": "#05070c",
+        "labels": true,
+        "progressTv": false,
+        "tiles": [
+          {
+            "id": "ag1",
+            "x": 0,
+            "y": 0,
+            "w": 2,
+            "h": 2,
+            "title": "Visão geral da unidade",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:agro:agro-geral",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "ag2",
+            "x": 2,
+            "y": 0,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:agro:agro-du",
+                "duration": 30
+              }
+            ]
+          },
+          {
+            "id": "ag3",
+            "x": 2,
+            "y": 1,
+            "w": 1,
+            "h": 1,
+            "title": "",
+            "header": true,
+            "fit": "contain",
+            "items": [
+              {
+                "source": "widget:agro:agro-cam",
+                "duration": 30
+              },
+              {
+                "source": "widget:operacao:op-alarms-1",
+                "duration": 15
+              }
+            ]
+          }
+        ]
       }
     ]
+  },
+  "rotation": {
+    "enabled": false,
+    "pages": [
+      "operacao",
+      "executivo",
+      "seguranca"
+    ],
+    "interval": 30,
+    "resumeAfter": 60
   },
   "architecture": [
     {
@@ -1055,7 +1536,7 @@ pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-mono
   <script>
 "use strict";
 /*!
- * COI Forge v0.3.0 — plataforma web para Centros de Operações Integradas
+ * COI Forge v0.5.0 — plataforma web para Centros de Operações Integradas
  * Arquivo único: estrutura, estilos, configuração padrão e aplicação.
  * Licença MIT.
  */
@@ -1067,6 +1548,7 @@ window.COI_DEFAULTS = JSON.parse(document.getElementById("coi-defaults").textCon
 /* ==========================================================
    Store — persistência, migração e utilitários
    ========================================================== */
+/* @core-begin — U, Store e Wall não dependem do DOM (usados também pelo coi-tools.mjs) */
 const U = {
   esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1101,16 +1583,21 @@ const U = {
     return prefix + "-" + Math.random().toString(36).slice(2, 8);
   },
   clone(o) { return JSON.parse(JSON.stringify(o)); },
-  isHttps(url) { return /^https:\/\/[^\s"'<>]+$/i.test(String(url || "").trim()); }
+  isHttps(url) { return /^https:\/\/[^\s"'<>]+$/i.test(String(url || "").trim()); },
+  // caminho do próprio site (ex.: agro/index.html?vw-embed=1&tela=geral), sem esquema, sem “..”
+  isLocal(url) {
+    const u = String(url || "").trim();
+    return !!u && !/^[a-z][a-z0-9+.-]*:/i.test(u) && !u.startsWith("//") && !/[\s"'<>\\]/.test(u) && !/(^|\/)\.\.(\/|$)/.test(u);
+  }
 };
 
 const Store = (() => {
-  const KEY = "coi-forge:state:v3";
-  const LEGACY = ["coi-forge:state:v2"];
+  const KEY = "coi-forge:state:v5";
+  const LEGACY = ["coi-forge:state:v4", "coi-forge:state:v3", "coi-forge:state:v2"];
   const SOURCE_TYPES = ["simulated", "rest", "websocket"];
 
   function valid(s) {
-    return !!s && (s.version === 2 || s.version === 3) && Array.isArray(s.pages) && s.pages.length > 0 &&
+    return !!s && [2, 3, 4, 5].includes(s.version) && Array.isArray(s.pages) && s.pages.length > 0 &&
       s.pages.every(p => p && typeof p.id === "string" && Array.isArray(p.widgets));
   }
 
@@ -1126,12 +1613,84 @@ const Store = (() => {
     };
   }
 
+  /* ---------- videowall v4: layouts e playlists ---------- */
+  function sourceOk(src, pages) {
+    const [kind, a, b] = String(src || "").split(":");
+    const page = pages.find(p => p.id === a);
+    if (kind === "page") return !!page;
+    if (kind === "widget") return !!page && page.widgets.some(w => w.id === b);
+    return false;
+  }
+  function wallItem(x, pages) {
+    const source = x && typeof x.source === "string" ? x.source.slice(0, 200) : "none";
+    return { source: sourceOk(source, pages) ? source : "none", duration: U.clamp(Math.round(U.num(x && x.duration, 30)), 5, 3600) };
+  }
+  const ASPECTS = ["16:9", "16:10", "21:9", "4:3", "9:16"];
+  function wallTile(raw, pages, k) {
+    raw = raw || {};
+    // v3: { source } · v4: { items } · v5: { id, x, y, w, h, title, header, fit, items }
+    const list = Array.isArray(raw.items) ? raw.items : raw.source ? [{ source: raw.source }] : [];
+    const items = list.slice(0, 12).map(x => wallItem(x, pages));
+    return {
+      id: String(raw.id || "t" + (k + 1)).slice(0, 24),
+      x: Math.round(U.num(raw.x, 0)), y: Math.round(U.num(raw.y, 0)),
+      w: U.clamp(Math.round(U.num(raw.w, 1)), 1, 8), h: U.clamp(Math.round(U.num(raw.h, 1)), 1, 6),
+      title: String(raw.title || "").slice(0, 40),
+      header: raw.header !== false,
+      fit: raw.fit === "cover" ? "cover" : "contain",
+      items: items.length ? items : [{ source: "none", duration: 30 }]
+    };
+  }
+  function wallLayout(l, pages, i) {
+    l = l || {};
+    const rows = U.clamp(Math.round(U.num(l.rows, 2)), 1, 6), cols = U.clamp(Math.round(U.num(l.cols, 3)), 1, 8);
+    const src = Array.isArray(l.tiles) ? l.tiles : [];
+    const geo = src.some(t => t && typeof t.x === "number" && typeof t.y === "number");
+    // v3/v4: uma tela por posição (linha × coluna) → v5: retângulos 1 × 1
+    let tiles = geo ? src.map((t, k) => wallTile(t, pages, k))
+      : src.slice(0, rows * cols).map((t, k) => Object.assign(wallTile(t, pages, k), { x: k % cols, y: Math.floor(k / cols), w: 1, h: 1 }));
+    tiles = Wall.fit(tiles, rows, cols).tiles;
+    const seen = new Set();
+    tiles.forEach((t, k) => { let id = t.id, n = 2; while (seen.has(id)) id = t.id + "-" + n++; t.id = id; seen.add(id); });
+    return {
+      id: String(l.id || "layout-" + (i + 1)).slice(0, 40),
+      name: String(l.name || "Layout " + (i + 1)).slice(0, 40),
+      rows, cols,
+      aspect: ASPECTS.includes(l.aspect) ? l.aspect : "16:9",
+      bezel: U.clamp(Math.round(U.num(l.bezel, 6)), 0, 24),
+      seams: l.seams !== false,
+      background: /^#[0-9a-f]{6}$/i.test(l.background || "") ? l.background : "#05070c",
+      labels: l.labels !== false, progressTv: l.progressTv === true, tiles
+    };
+  }
+  function videowall(v, pages, defaults) {
+    let layouts;
+    if (v && Array.isArray(v.layouts) && v.layouts.length) layouts = v.layouts.slice(0, 20).map((l, i) => wallLayout(l, pages, i));
+    else if (v && (Array.isArray(v.tiles) || v.rows)) layouts = [wallLayout({ id: "principal", name: "Layout principal", rows: v.rows, cols: v.cols, labels: v.labels, tiles: v.tiles }, pages, 0)];
+    else layouts = defaults.videowall.layouts.map((l, i) => wallLayout(l, pages, i));
+    const seen = new Set();
+    layouts.forEach(l => { let id = l.id, n = 2; while (seen.has(id)) id = l.id + "-" + n++; l.id = id; seen.add(id); });
+    const active = v && layouts.some(l => l.id === v.activeLayout) ? v.activeLayout : layouts[0].id;
+    return { activeLayout: active, layouts };
+  }
+  function rotation(r, pages) {
+    r = r || {};
+    const ids = pages.map(p => p.id);
+    return {
+      enabled: r.enabled === true,
+      pages: (Array.isArray(r.pages) ? r.pages : ids).filter((id, i, a) => ids.includes(id) && a.indexOf(id) === i),
+      interval: U.clamp(Math.round(U.num(r.interval, 30)), 10, 3600),
+      resumeAfter: U.clamp(Math.round(U.num(r.resumeAfter, 60)), 10, 600)
+    };
+  }
+
   function normalize(s) {
     const defaults = window.COI_DEFAULTS;
     const out = Object.assign(U.clone(defaults), s);
-    out.version = 3;
+    out.version = 5;
     out.settings = Object.assign(U.clone(defaults.settings), s.settings || {});
-    out.videowall = Object.assign(U.clone(defaults.videowall), s.videowall || {});
+    out.videowall = videowall(s.videowall, out.pages, defaults);
+    out.rotation = rotation(s.rotation, out.pages);
     if (!Array.isArray(out.architecture)) out.architecture = [];
     if (!Array.isArray(out.assets)) out.assets = [];
     // v2 → v3: configurações antigas recebem as fontes padrão, sem vínculos
@@ -1175,8 +1734,134 @@ const Store = (() => {
     return U.clone(window.COI_DEFAULTS);
   }
 
-  return { load, save, reset, valid, normalize, source, SOURCE_TYPES };
+  return { load, save, reset, valid, normalize, source, wallLayout, ASPECTS, SOURCE_TYPES };
 })();
+
+/* ==========================================================
+   Wall — playlists por tela, modelos de matriz e rotação
+   (cálculo puro, sem DOM; testado por "node coi-tools.mjs testar wall")
+   ========================================================== */
+const Wall = (() => {
+  const MIN = 5, MAX = 3600;
+  const duration = d => Math.min(MAX, Math.max(MIN, Math.round(Number(d) || 30)));
+
+  // Item atual de uma tela, calculado pelo tempo decorrido desde o início do ciclo
+  // (não por contador): se o navegador atrasar, a próxima verificação já corrige.
+  function current(items, elapsed) {
+    const list = Array.isArray(items) && items.length ? items : [{ source: "none", duration: 30 }];
+    if (list.length === 1) return { index: 0, item: list[0], remaining: null, progress: null, count: 1 };
+    const total = list.reduce((sum, it) => sum + duration(it.duration), 0);
+    let pos = ((elapsed % total) + total) % total;
+    for (let i = 0; i < list.length; i++) {
+      const d = duration(list[i].duration);
+      if (pos < d) return { index: i, item: list[i], remaining: d - pos, progress: pos / d, count: list.length };
+      pos -= d;
+    }
+    const last = list.length - 1;
+    return { index: last, item: list[last], remaining: 0, progress: 1, count: list.length };
+  }
+
+  /* ---------- geometria livre (v0.4.1) ----------
+     Cada tela é um retângulo { x, y, w, h } em células da matriz (1 célula = 1 monitor).
+     Telas não se sobrepõem; células sem tela ficam “sem sinal”. */
+  const PRESETS = [
+    { id: "2x2", name: "2×2", cols: 2, rows: 2 },
+    { id: "3x2", name: "3×2", cols: 3, rows: 2 },
+    { id: "3x3", name: "3×3", cols: 3, rows: 3 },
+    { id: "4x2", name: "4×2", cols: 4, rows: 2 },
+    { id: "4x3", name: "4×3", cols: 4, rows: 3 },
+    { id: "4x2-destaque", name: "4×2 destaque", cols: 4, rows: 2, rects: [[0, 0, 2, 2], [2, 0, 1, 1], [3, 0, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1]] },
+    { id: "3x3-destaque", name: "3×3 destaque", cols: 3, rows: 3, rects: [[0, 0, 2, 2], [2, 0, 1, 1], [2, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1]] },
+    { id: "4x3-central", name: "4×3 central", cols: 4, rows: 3, rects: [[1, 0, 2, 2], [0, 0, 1, 1], [3, 0, 1, 1], [0, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]] },
+    { id: "3x2-faixa", name: "3×2 faixa", cols: 3, rows: 2, rects: [[0, 0, 3, 1], [0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1]] }
+  ];
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const inside = (r, rows, cols) => r.x >= 0 && r.y >= 0 && r.w >= 1 && r.h >= 1 && r.x + r.w <= cols && r.y + r.h <= rows;
+  const ordered = tiles => tiles.slice().sort((a, b) => a.y - b.y || a.x - b.x);
+  const hasContent = t => t.items.some(it => it.source !== "none");
+  function canPlace(tiles, r, rows, cols, ignoreId) {
+    return inside(r, rows, cols) && !tiles.some(t => t.id !== ignoreId && overlaps(t, r));
+  }
+  // Ajusta as telas a uma matriz: corta o que passa da borda e descarta sobreposições
+  function fit(tiles, rows, cols) {
+    const out = [];
+    let removed = 0;
+    ordered(tiles).forEach(t => {
+      const r = clone(t);
+      r.x = Math.max(0, r.x); r.y = Math.max(0, r.y);
+      r.w = Math.min(r.w, cols - r.x); r.h = Math.min(r.h, rows - r.y);
+      if (r.w < 1 || r.h < 1 || out.some(o => overlaps(o, r))) { if (hasContent(t)) removed++; return; }
+      out.push(r);
+    });
+    return { tiles: out, removed };
+  }
+  function freeCells(tiles, rows, cols) {
+    const cells = [];
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      if (!tiles.some(t => overlaps(t, { x, y, w: 1, h: 1 }))) cells.push({ x, y });
+    }
+    return cells;
+  }
+  function firstFree(tiles, rows, cols, w = 1, h = 1) {
+    for (let y = 0; y + h <= rows; y++) for (let x = 0; x + w <= cols; x++) {
+      if (canPlace(tiles, { x, y, w, h }, rows, cols)) return { x, y, w, h };
+    }
+    return null;
+  }
+  // Move uma tela; se o destino é exatamente outra tela do mesmo tamanho, troca as duas de lugar
+  function move(tiles, id, x, y, rows, cols) {
+    const t = tiles.find(o => o.id === id);
+    if (!t) return null;
+    const r = { x, y, w: t.w, h: t.h };
+    if (canPlace(tiles, r, rows, cols, id)) return tiles.map(o => o.id === id ? Object.assign(clone(o), { x, y }) : clone(o));
+    const other = tiles.find(o => o.id !== id && o.x === x && o.y === y && o.w === t.w && o.h === t.h);
+    if (other) return tiles.map(o => o.id === id ? Object.assign(clone(o), { x, y }) : o.id === other.id ? Object.assign(clone(o), { x: t.x, y: t.y }) : clone(o));
+    return null;
+  }
+  function resize(tiles, id, w, h, rows, cols) {
+    const t = tiles.find(o => o.id === id);
+    if (!t) return null;
+    const r = { x: t.x, y: t.y, w, h };
+    return canPlace(tiles, r, rows, cols, id) ? tiles.map(o => o.id === id ? Object.assign(clone(o), { w, h }) : clone(o)) : null;
+  }
+  // Divide uma tela mesclada em telas 1 × 1; a primeira mantém o conteúdo
+  function split(tiles, id, newId) {
+    const t = tiles.find(o => o.id === id);
+    if (!t || t.w * t.h === 1) return null;
+    const out = tiles.filter(o => o.id !== id).map(clone);
+    for (let y = t.y; y < t.y + t.h; y++) for (let x = t.x; x < t.x + t.w; x++) {
+      const first = x === t.x && y === t.y;
+      out.push(Object.assign(clone(t), { id: first ? t.id : newId(), x, y, w: 1, h: 1, title: first ? t.title : "",
+        items: first ? clone(t.items) : [{ source: "none", duration: 30 }] }));
+    }
+    return out;
+  }
+  // Aplica um modelo: os retângulos do modelo recebem o conteúdo das telas atuais na ordem de leitura
+  function preset(tiles, p, newId) {
+    const rects = p.rects || Array.from({ length: p.rows * p.cols }, (_, k) => [k % p.cols, Math.floor(k / p.cols), 1, 1]);
+    const src = ordered(tiles).filter(hasContent).concat(ordered(tiles).filter(t => !hasContent(t)));
+    const out = rects.map(([x, y, w, h], k) => {
+      const base = src[k] ? clone(src[k]) : { id: newId(), title: "", header: true, fit: "contain", items: [{ source: "none", duration: 30 }] };
+      return Object.assign(base, { x, y, w, h });
+    });
+    const lost = src.slice(rects.length).filter(hasContent).length;
+    return { tiles: out, lost };
+  }
+  function nextPage(ids, currentId) {
+    if (!ids.length) return null;
+    return ids[(ids.indexOf(currentId) + 1) % ids.length];
+  }
+
+  let epoch = Date.now();
+  return {
+    MIN, MAX, PRESETS, duration, current, nextPage,
+    overlaps, inside, ordered, canPlace, fit, freeCells, firstFree, move, resize, split, preset,
+    restart(now = Date.now()) { epoch = now; },
+    elapsed(now = Date.now()) { return (now - epoch) / 1000; }
+  };
+})();
+/* @core-end */
 
 /* ==========================================================
    DataHub — fontes de dados (REST, WebSocket, simulador)
@@ -1729,11 +2414,11 @@ const WIDGETS = {
   },
 
   embed: {
-    label: "Página externa", icon: "⧉", description: "Incorpora Power BI, Grafana ou outra URL https",
+    label: "Página externa", icon: "⧉", description: "Power BI, Grafana, telas do COE Agro ou outra página",
     defaults: { w: 6, h: 4, title: "Painel externo", props: { url: "" } },
-    fields: [{ key: "url", label: "URL (https)", type: "text" }],
+    fields: [{ key: "url", label: "URL https ou caminho do site (ex.: agro/index.html?vw-embed=1&tela=geral)", type: "text" }],
     render(w) {
-      if (!U.isHttps(w.props.url)) return `<div class="empty">Informe uma URL https publicável (ex.: link de incorporação do Power BI ou Grafana).</div>`;
+      if (!U.isHttps(w.props.url) && !U.isLocal(w.props.url)) return `<div class="empty">Informe uma URL https publicável (Power BI, Grafana) ou um caminho do próprio site, como uma tela do COE Agro: agro/index.html?vw-embed=1&amp;tela=geral.</div>`;
       return `<iframe class="embed" src="${U.esc(w.props.url)}" title="${U.esc(w.title)}" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>`;
     }
   }
@@ -1935,6 +2620,8 @@ const Views = {
         <button type="button" class="btn" data-action="page-add">＋ Nova página</button>
         <button type="button" class="btn" data-action="page-rename">Renomear página</button>
         <button type="button" class="btn danger" data-action="page-del" ${state.pages.length < 2 ? "disabled" : ""}>Excluir página</button>
+        <button type="button" class="btn" data-action="undo" ${ui.hist && ui.hist.past ? "" : "disabled"} title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+        <button type="button" class="btn" data-action="redo" ${ui.hist && ui.hist.future ? "" : "disabled"} title="Refazer (Ctrl+Shift+Z)">↷ Refazer</button>
         <span class="hint">Arraste os cards para reordenar e use o canto inferior direito para redimensionar.</span>
       </div>` : "";
     const body = page.widgets.length ? Views.grid(page, ui.editing) : `<div class="empty-page">
@@ -1964,40 +2651,157 @@ const Views = {
     return `<div class="no-signal"><span>SEM SINAL</span></div>`;
   },
 
-  videowall(state, ui) {
-    const vw = state.videowall, total = vw.rows * vw.cols;
-    const opts = (sel) => {
-      let html = `<option value="none" ${sel === "none" ? "selected" : ""}>Sem sinal</option><optgroup label="Páginas completas">`;
-      html += state.pages.map(p => `<option value="page:${U.esc(p.id)}" ${sel === "page:" + p.id ? "selected" : ""}>${U.esc(p.name)}</option>`).join("") + `</optgroup>`;
-      state.pages.forEach(p => {
-        if (!p.widgets.length) return;
-        html += `<optgroup label="Widgets · ${U.esc(p.name)}">` + p.widgets.map(w => {
-          const v = `widget:${p.id}:${w.id}`;
-          return `<option value="${U.esc(v)}" ${sel === v ? "selected" : ""}>${U.esc(w.title)}</option>`;
-        }).join("") + `</optgroup>`;
-      });
-      return html;
-    };
-    const num = (n, max, key) => Array.from({ length: max }, (_, i) =>
-      `<option value="${i + 1}" ${n === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("");
-    let tiles = "";
-    for (let i = 0; i < total; i++) {
-      const src = (vw.tiles[i] || {}).source || "none";
-      tiles += `<div class="tile">
-        ${vw.labels ? `<div class="tile-label"><b>TV ${String(i + 1).padStart(2, "0")}</b> ${U.esc(Views.sourceName(state, src))}</div>` : ""}
-        <div class="tile-screen">${Views.tileContent(state, src)}</div>
-        <label class="tile-select"><span class="sr-only">Fonte da TV ${i + 1}</span>
-          <select data-action="tile-src" data-index="${i}">${opts(src)}</select></label>
-      </div>`;
+  sourceOptions(state, sel) {
+    let html = `<option value="none" ${sel === "none" ? "selected" : ""}>Sem sinal</option><optgroup label="Páginas completas">`;
+    html += state.pages.map(p => `<option value="page:${U.esc(p.id)}" ${sel === "page:" + p.id ? "selected" : ""}>${U.esc(p.name)}</option>`).join("") + `</optgroup>`;
+    state.pages.forEach(p => {
+      if (!p.widgets.length) return;
+      html += `<optgroup label="Widgets · ${U.esc(p.name)}">` + p.widgets.map(w => {
+        const v = `widget:${p.id}:${w.id}`;
+        return `<option value="${U.esc(v)}" ${sel === v ? "selected" : ""}>${U.esc(w.title)}</option>`;
+      }).join("") + `</optgroup>`;
+    });
+    return html;
+  },
+
+  activeLayout(state, ui) {
+    const v = state.videowall;
+    return v.layouts.find(l => l.id === (ui && ui.tvLayout)) || v.layouts.find(l => l.id === v.activeLayout) || v.layouts[0];
+  },
+
+  hasEmbed(state, source) {
+    const [kind, a, b] = String(source || "").split(":");
+    const page = state.pages.find(p => p.id === a);
+    if (!page) return false;
+    if (kind === "page") return page.widgets.some(w => w.type === "embed");
+    if (kind === "widget") return page.widgets.some(w => w.id === b && w.type === "embed");
+    return false;
+  },
+
+  // Playlists com painel externo (até 4 itens) ficam montadas e alternam por visibilidade,
+  // para o Power BI/Grafana não recarregar a cada troca.
+  mounted(state, tile) {
+    const n = tile.items.length;
+    return n > 1 && n <= 4 && tile.items.some(it => Views.hasEmbed(state, it.source));
+  },
+
+  tileScreen(state, tile, cur) {
+    if (Views.mounted(state, tile)) {
+      return tile.items.map((it, k) => `<div class="tile-layer ${k === cur.index ? "on" : ""}" data-layer="${k}">${Views.tileContent(state, it.source)}</div>`).join("");
     }
+    return Views.tileContent(state, cur.item.source);
+  },
+
+  tileTitle(state, tile, cur) {
+    return tile.title || Views.sourceName(state, cur.item.source);
+  },
+
+  tileLabel(state, n, tile, cur, editing) {
+    const pl = cur.count > 1 ? `<span class="pl">${cur.index + 1}/${cur.count} · ${Math.max(1, Math.ceil(cur.remaining))} s</span>` : "";
+    const size = tile.w * tile.h > 1 ? `<span class="span-tag">${tile.w}×${tile.h}</span>` : "";
+    const title = editing
+      ? `<span class="t-title" contenteditable="plaintext-only" spellcheck="false" data-title-for="${U.esc(tile.id)}" title="Clique para renomear (vazio = nome automático)">${U.esc(tile.title || Views.sourceName(state, cur.item.source))}</span>`
+      : `<span class="t-title">${U.esc(Views.tileTitle(state, tile, cur))}</span>`;
+    return `<b>TV ${String(n).padStart(2, "0")}</b> ${title}${size}${pl}`;
+  },
+
+  aspect(L) {
+    const [a, b] = String(L.aspect || "16:9").split(":").map(Number);
+    return { a: a || 16, b: b || 9 };
+  },
+
+  // Linhas das emendas entre monitores dentro de uma tela mesclada
+  seams(L, tile) {
+    if (!L.seams || tile.w * tile.h === 1) return "";
+    let html = "";
+    for (let k = 1; k < tile.w; k++) html += `<i class="seam v" style="left:${(k / tile.w * 100).toFixed(4)}%"></i>`;
+    for (let k = 1; k < tile.h; k++) html += `<i class="seam h" style="top:${(k / tile.h * 100).toFixed(4)}%"></i>`;
+    return `<div class="seams" aria-hidden="true">${html}</div>`;
+  },
+
+  tileHTML(state, L, tile, n, el, editing, selected) {
+    const cur = Wall.current(tile.items, el);
+    const tools = editing
+      ? `<div class="tile-edit" contenteditable="false">
+          <span class="te-handle" data-wall-drag="${U.esc(tile.id)}" title="Arraste para mover (setas do teclado também)">⠿</span>
+          <button type="button" data-action="tile-cfg" data-tile="${U.esc(tile.id)}" title="Configurar tela e playlist" aria-label="Configurar tela">⚙</button>
+          <button type="button" data-action="tile-dup" data-tile="${U.esc(tile.id)}" title="Duplicar (Ctrl+D)" aria-label="Duplicar tela">⧉</button>
+          ${tile.w * tile.h > 1 ? `<button type="button" data-action="tile-split" data-tile="${U.esc(tile.id)}" title="Dividir em telas 1×1" aria-label="Dividir tela">⊞</button>` : ""}
+          <button type="button" data-action="tile-del" data-tile="${U.esc(tile.id)}" title="Remover (Del)" aria-label="Remover tela">✕</button>
+        </div>
+        <span class="te-resize" data-wall-resize="${U.esc(tile.id)}" title="Arraste para redimensionar (Shift + setas também)">⤡</span>`
+      : `<div class="tile-tools">${cur.count > 1
+          ? `<span class="pl-info">Playlist · ${cur.count} conteúdos</span>`
+          : `<label class="sr-only" for="ts-${U.esc(tile.id)}">Fonte da TV ${n}</label><select id="ts-${U.esc(tile.id)}" data-action="tile-src" data-tile="${U.esc(tile.id)}">${Views.sourceOptions(state, tile.items[0].source)}</select>`}
+          <button type="button" class="pl-btn" data-action="tile-cfg" data-tile="${U.esc(tile.id)}">⚙ Playlist</button></div>`;
+    return `<div class="tile fit-${tile.fit} ${selected ? "is-selected" : ""}" data-tile-id="${U.esc(tile.id)}" tabindex="${editing ? 0 : -1}"
+        style="grid-column:${tile.x + 1} / span ${tile.w};grid-row:${tile.y + 1} / span ${tile.h}">
+        ${L.labels && tile.header ? `<div class="tile-label">${Views.tileLabel(state, n, tile, cur, editing)}</div>` : ""}
+        <div class="tile-screen" data-cur="${cur.index}">${Views.tileScreen(state, tile, cur)}</div>
+        ${Views.seams(L, tile)}
+        ${cur.count > 1 ? `<div class="tile-prog"><i style="width:${(cur.progress * 100).toFixed(1)}%"></i></div>` : ""}
+        ${tools}
+      </div>`;
+  },
+
+  wallGrid(state, L, ui) {
+    const el = Wall.elapsed(), editing = ui.editing && !ui.tv, { a, b } = Views.aspect(L);
+    const tiles = Wall.ordered(L.tiles).map((t, k) => Views.tileHTML(state, L, t, k + 1, el, editing, editing && ui.wallSel === t.id)).join("");
+    const empty = Wall.freeCells(L.tiles, L.rows, L.cols).map(c => `<div class="cell-empty" style="grid-column:${c.x + 1};grid-row:${c.y + 1}">
+        ${editing ? `<button type="button" data-action="tile-add" data-x="${c.x}" data-y="${c.y}" title="Criar tela nesta posição">＋</button>` : `<span>SEM SINAL</span>`}</div>`).join("");
+    const cells = editing ? `<div class="wall-cells" aria-hidden="true">${Array.from({ length: L.rows * L.cols }, () => "<i></i>").join("")}</div>` : "";
+    return `<div class="wall ${L.labels ? "labeled" : ""} ${L.progressTv ? "prog-tv" : ""} ${editing ? "is-editing" : ""}" id="wall" data-layout="${U.esc(L.id)}"
+      style="--cols:${L.cols};--rows:${L.rows};--ar:${a};--br:${b};--bezel:${L.bezel}px;--wallbg:${U.esc(L.background)}">${cells}${empty}${tiles}<div class="wall-ghost" id="wallGhost" hidden></div></div>`;
+  },
+
+  videowall(state, ui) {
+    const v = state.videowall, L = Views.activeLayout(state, ui), editing = ui.editing && !ui.tv;
+    const layoutOpts = v.layouts.map(l => `<option value="${U.esc(l.id)}" ${l.id === L.id ? "selected" : ""}>${U.esc(l.name)}</option>`).join("");
+    const num = (n, max) => Array.from({ length: max }, (_, i) => `<option value="${i + 1}" ${n === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("");
+    const pres = Wall.PRESETS.map(p => `<button type="button" data-action="wall-preset" data-preset="${p.id}"
+      class="${!p.rects && p.cols === L.cols && p.rows === L.rows && L.tiles.length === p.cols * p.rows && L.tiles.every(t => t.w * t.h === 1) ? "active" : ""}" title="Aplicar modelo ${p.name}">${p.name}</button>`).join("");
+    const playlists = L.tiles.filter(t => t.items.length > 1).length, merged = L.tiles.filter(t => t.w * t.h > 1).length;
+    const free = Wall.freeCells(L.tiles, L.rows, L.cols).length;
+    const hist = ui.hist || { past: 0, future: 0 };
+    const editbar = editing ? `<div class="editor-bar" role="toolbar" aria-label="Editor do videowall">
+        <span class="editor-tag">MODO EDIÇÃO</span>
+        <button type="button" class="btn primary sm" data-action="tile-add">＋ Adicionar tela</button>
+        <button type="button" class="btn sm" data-action="undo" ${hist.past ? "" : "disabled"} title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+        <button type="button" class="btn sm" data-action="redo" ${hist.future ? "" : "disabled"} title="Refazer (Ctrl+Shift+Z)">↷ Refazer</button>
+        <button type="button" class="btn sm" data-action="layout-restore" title="Voltar este layout ao padrão">Restaurar layout</button>
+        <span class="editor-hint">Clique no nome da TV para renomear · ⠿ move (soltar sobre outra tela do mesmo tamanho troca as duas) · ⤡ redimensiona e mescla monitores · ⊞ divide · ⧉ duplica · ✕ remove · ＋ cria tela em célula vazia · teclado: setas movem, Shift+setas redimensionam, Del remove, Ctrl+D duplica</span>
+      </div>` : "";
+    const look = `<div class="wall-row wall-look">
+          <label class="field-inline">Monitor <select data-action="wall-aspect">${Store.ASPECTS.map(x => `<option ${x === L.aspect ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+          <label class="field-inline">Moldura <input type="range" min="0" max="24" value="${L.bezel}" data-action="wall-bezel" aria-label="Espessura da moldura entre monitores"><output>${L.bezel} px</output></label>
+          <label class="field-inline">Fundo <input type="color" value="${U.esc(L.background)}" data-action="wall-bg" aria-label="Cor de fundo do videowall"></label>
+          <label class="check"><input type="checkbox" data-action="wall-seams" ${L.seams ? "checked" : ""}> Emendas nas telas mescladas</label>
+          <label class="check"><input type="checkbox" data-action="wall-labels" ${L.labels ? "checked" : ""}> Identificar telas</label>
+          <label class="check"><input type="checkbox" data-action="wall-progtv" ${L.progressTv ? "checked" : ""}> Progresso no modo TV</label>
+        </div>`;
     return `<section class="card wall-controls">
-        <div class="field-inline"><label>Linhas <select data-action="wall-rows">${num(vw.rows, 4)}</select></label>
-        <label>Colunas <select data-action="wall-cols">${num(vw.cols, 6)}</select></label>
-        <label class="check"><input type="checkbox" data-action="wall-labels" ${vw.labels ? "checked" : ""}> Identificar telas</label></div>
-        <div class="wall-meta muted">${total} telas · proporção 16:9 por tela</div>
-        <button type="button" class="btn primary" data-action="wall-tv">▶ Modo TV</button>
+        <div class="wall-row">
+          <label class="lbl" for="wallLayout">Layout</label>
+          <select id="wallLayout" class="layout-select" data-action="layout-select">${layoutOpts}</select>
+          <button type="button" class="btn sm" data-action="layout-new">＋ Novo</button>
+          <button type="button" class="btn sm" data-action="layout-dup">Duplicar</button>
+          <button type="button" class="btn sm" data-action="layout-rename">Renomear</button>
+          <button type="button" class="btn sm danger" data-action="layout-del" ${v.layouts.length < 2 ? "disabled" : ""}>Excluir</button>
+          <span class="grow"></span>
+          ${editing ? "" : `<button type="button" class="btn sm" data-action="edit-on" title="Editar a montagem do videowall">✎ Editar layout</button>`}
+          <button type="button" class="btn sm" data-action="tv-link" title="Copia o endereço que abre este layout direto no modo TV">Copiar link do modo TV</button>
+          <button type="button" class="btn primary" data-action="wall-tv">▶ Modo TV</button>
+        </div>
+        <div class="wall-row">
+          <div class="field-inline"><label>Linhas <select data-action="wall-rows">${num(L.rows, 6)}</select></label>
+          <label>Colunas <select data-action="wall-cols">${num(L.cols, 8)}</select></label></div>
+          <span class="lbl">Modelos</span><div class="seg" role="group" aria-label="Modelos de matriz">${pres}</div>
+          <span class="wall-meta muted">${L.rows * L.cols} monitores · ${L.tiles.length} telas · ${merged} mescladas · ${playlists} com playlist · ${free} livres · ${U.esc(L.aspect)}</span>
+        </div>
+        ${look}
       </section>
-      <section class="wall-frame"><div class="wall ${vw.labels ? "labeled" : ""}" id="wall" style="--cols:${vw.cols};--rows:${vw.rows}">${tiles}</div></section>`;
+      ${editbar}
+      <section class="wall-frame" style="--wallbg:${U.esc(L.background)}">${Views.wallGrid(state, L, ui)}</section>`;
   },
 
   editableTable(coll, rows, cols, editing) {
@@ -2160,6 +2964,16 @@ const Views = {
         <label class="field">Intervalo de atualização (segundos)<input type="number" min="2" max="60" data-setting="refresh" value="${U.esc(s.refresh)}"></label>
         <p class="muted">Pausar a simulação interrompe os widgets com “Simular” ativo e as fontes do tipo Simulador. Fontes REST e WebSocket continuam ativas — gerencie-as em <strong>Fontes de dados</strong>.</p>
       </section>
+      <section class="card"><h2>Rotação de páginas</h2>
+        <label class="check"><input type="checkbox" data-rot="enabled" ${state.rotation.enabled ? "checked" : ""}> Alternar páginas automaticamente no dashboard</label>
+        <div class="group-title">Páginas na rotação</div>
+        <div class="rot-pages">${state.pages.map(p => `<label class="check"><input type="checkbox" data-rot="page" value="${U.esc(p.id)}" ${state.rotation.pages.includes(p.id) ? "checked" : ""}> ${U.esc(p.name)}</label>`).join("")}</div>
+        <div class="field-row">
+          <label class="field">Intervalo (s)<input type="number" min="10" max="3600" data-rot="interval" value="${U.esc(state.rotation.interval)}"></label>
+          <label class="field">Retomar após (s)<input type="number" min="10" max="600" data-rot="resumeAfter" value="${U.esc(state.rotation.resumeAfter)}"></label>
+        </div>
+        <p class="muted">Funciona fora do modo de edição, com ao menos 2 páginas selecionadas. Qualquer clique, rolagem ou tecla pausa a rotação, que retoma sozinha após o tempo definido. Para abrir direto em apresentação: <code>?view=dashboard&amp;rotate=1</code>.</p>
+      </section>
       <section class="card"><h2>Configuração</h2>
         <p class="muted">Todas as alterações ficam salvas neste navegador. Exporte o JSON para versionar no repositório ou compartilhar com a equipe.</p>
         <div class="btn-row">
@@ -2182,7 +2996,7 @@ const Views = {
   const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 
   let state = Store.load();
-  const ui = { view: "dashboard", editing: false, drawer: null };
+  const ui = { view: "dashboard", editing: false, drawer: null, tv: false, tvLayout: null, kiosk: false };
   let simTimer = null, dragId = null, saveTimer = null;
 
   const VIEW_META = {
@@ -2202,10 +3016,49 @@ const Views = {
     const page = state.pages.find(p => p.id === pageId);
     return page ? { page, widget: page.widgets.find(w => w.id === id), index: page.widgets.findIndex(w => w.id === id) } : {};
   }
+  /* ---------- histórico: desfazer / refazer (v0.4.1) ---------- */
+  const HIST_MAX = 40;
+  const hist = { past: [], future: [], last: "" };
+  const snap = () => { const { activePage, ...rest } = state; return JSON.stringify(rest); };
+  function track() {
+    const now = snap();
+    if (now === hist.last) return;
+    if (hist.last) { hist.past.push(hist.last); if (hist.past.length > HIST_MAX) hist.past.shift(); }
+    hist.future = []; hist.last = now;
+    syncHist();
+  }
+  function syncHist() {
+    ui.hist = { past: hist.past.length, future: hist.future.length };
+    $$('[data-action="undo"]').forEach(b => (b.disabled = !hist.past.length));
+    $$('[data-action="redo"]').forEach(b => (b.disabled = !hist.future.length));
+  }
+  function restoreSnap(json) {
+    const page = state.activePage;
+    state = Object.assign(JSON.parse(json), { activePage: page });
+    if (!state.pages.some(p => p.id === state.activePage)) state.activePage = state.pages[0].id;
+    hist.last = json;
+    Store.save(state);
+    if (ui.wallSel && !currentLayout().tiles.some(t => t.id === ui.wallSel)) ui.wallSel = null;
+    closeDrawer(); restartSimulation(); render(); syncHist();
+  }
+  function undo() {
+    clearTimeout(saveTimer); track();
+    if (!hist.past.length) { toast("Nada para desfazer."); return; }
+    hist.future.push(hist.last);
+    restoreSnap(hist.past.pop());
+    toast("Alteração desfeita.");
+  }
+  function redo() {
+    if (!hist.future.length) { toast("Nada para refazer."); return; }
+    hist.past.push(hist.last);
+    restoreSnap(hist.future.pop());
+    toast("Alteração refeita.");
+  }
+
   function save(immediate) {
     clearTimeout(saveTimer);
-    if (immediate) Store.save(state);
-    else saveTimer = setTimeout(() => Store.save(state), 250);
+    if (immediate) { Store.save(state); track(); }
+    else saveTimer = setTimeout(() => { Store.save(state); track(); }, 250);
   }
   function toast(msg, tone = "") {
     const t = $("#toast");
@@ -2318,6 +3171,8 @@ const Views = {
   /* ---------- render ---------- */
   function render() {
     applyTheme();
+    document.body.classList.toggle("tv", ui.tv);
+    document.body.classList.toggle("kiosk", ui.kiosk);
     document.body.classList.toggle("editing", ui.editing);
     $("#editBtn").textContent = ui.editing ? "✓ Concluir edição" : "✎ Editar COI";
     $("#editBtn").setAttribute("aria-pressed", String(ui.editing));
@@ -2333,6 +3188,7 @@ const Views = {
     updateClocks();
     updateLive();
     if (ui.view === "videowall") requestAnimationFrame(fitStages);
+    rotTick();
   }
 
   function rerenderWidget(pageId, id) {
@@ -2346,17 +3202,328 @@ const Views = {
   }
 
   /* ---------- videowall: escala das telas ---------- */
-  function fitStages() {
-    $$(".tile-screen").forEach(screen => {
-      const stage = screen.querySelector(".stage");
-      if (!stage) return;
+  function fitScreen(screen) {
+    const cover = !!screen.closest(".fit-cover");
+    screen.querySelectorAll(".stage").forEach(stage => {
       stage.style.transform = "none";
+      // widget: o palco assume a proporção da tela (inclusive telas mescladas), sem faixas vazias
+      if (stage.classList.contains("stage-widget") && screen.clientHeight) {
+        // páginas incorporadas (ex.: telas do COE Agro) precisam de uma área virtual grande para usar o layout de desktop
+        const base = stage.querySelector("iframe.embed") ? 900 : 360;
+        stage.style.height = base + "px";
+        stage.style.width = Math.round(base * screen.clientWidth / screen.clientHeight) + "px";
+      }
       const sw = stage.offsetWidth, sh = stage.offsetHeight;
-      if (!sw || !sh) return;
-      const s = Math.min(screen.clientWidth / sw, screen.clientHeight / sh);
+      if (!sw || !sh || !screen.clientWidth) return;
+      const s = (cover ? Math.max : Math.min)(screen.clientWidth / sw, screen.clientHeight / sh);
       const x = (screen.clientWidth - sw * s) / 2, y = (screen.clientHeight - sh * s) / 2;
       stage.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
     });
+  }
+  function fitStages() { $$(".tile-screen").forEach(fitScreen); }
+
+  /* ---------- videowall: playlists e editor de layout (v0.4.1) ---------- */
+  function currentLayout() { return Views.activeLayout(state, ui); }
+  const newTileId = () => "t" + Math.random().toString(36).slice(2, 8);
+  const blankTile = r => Object.assign({ id: newTileId(), title: "", header: true, fit: "contain", items: [{ source: "none", duration: 30 }] }, r);
+  const findTile = id => currentLayout().tiles.find(t => t.id === id);
+
+  // A cada segundo: troca apenas as telas cujo item mudou; as demais não são tocadas.
+  function wallTick() {
+    if (ui.view !== "videowall" || wallDrag) return;
+    const wall = $("#wall"), L = currentLayout();
+    if (!wall || wall.dataset.layout !== L.id) return;
+    const el = Wall.elapsed(), editing = ui.editing && !ui.tv;
+    Wall.ordered(L.tiles).forEach((tile, k) => {
+      const node = wall.querySelector(`.tile[data-tile-id="${CSS.escape(tile.id)}"]`);
+      if (!node) return;
+      const cur = Wall.current(tile.items, el);
+      const screen = node.querySelector(".tile-screen");
+      if (+screen.dataset.cur !== cur.index) {
+        screen.dataset.cur = cur.index;
+        const layers = screen.querySelectorAll(":scope > .tile-layer");
+        if (layers.length) layers.forEach((ly, n) => ly.classList.toggle("on", n === cur.index));
+        else {
+          screen.innerHTML = Views.tileScreen(state, tile, cur);
+          screen.classList.remove("enter"); void screen.offsetWidth; screen.classList.add("enter");
+          fitScreen(screen);
+          updateClocks();
+        }
+      }
+      const lab = node.querySelector(".tile-label");
+      // não reescreve o nome enquanto ele está sendo editado
+      if (lab && !(editing && lab.contains(document.activeElement))) lab.innerHTML = Views.tileLabel(state, k + 1, tile, cur, editing);
+      const bar = node.querySelector(".tile-prog i");
+      if (bar) {
+        const pct = cur.progress * 100, prev = parseFloat(bar.style.width) || 0;
+        if (pct < prev) { bar.style.transition = "none"; bar.style.width = pct.toFixed(1) + "%"; void bar.offsetWidth; bar.style.transition = ""; }
+        else bar.style.width = pct.toFixed(1) + "%";
+      }
+    });
+  }
+
+  function setMatrix(L, rows, cols, ask) {
+    rows = U.clamp(rows, 1, 6); cols = U.clamp(cols, 1, 8);
+    if (rows === L.rows && cols === L.cols) return false;
+    const res = Wall.fit(L.tiles, rows, cols);
+    if (ask && res.removed && !confirm(`${res.removed} tela(s) com conteúdo ficarão fora da nova matriz e serão removidas. Continuar?`)) return false;
+    L.tiles = res.tiles; L.rows = rows; L.cols = cols;
+    return true;
+  }
+
+  function wallCommit(msg) {
+    save(true); render();
+    if (msg) toast(msg);
+  }
+  function selectTile(id, focus) {
+    ui.wallSel = id || null;
+    $$("#wall .tile").forEach(n => n.classList.toggle("is-selected", n.dataset.tileId === ui.wallSel));
+    if (focus && id) { const n = $(`#wall .tile[data-tile-id="${CSS.escape(id)}"]`); if (n) n.focus({ preventScroll: true }); }
+  }
+  function addTile(x, y) {
+    const L = currentLayout();
+    const r = x !== undefined ? { x: +x, y: +y, w: 1, h: 1 } : Wall.firstFree(L.tiles, L.rows, L.cols);
+    if (!r || !Wall.canPlace(L.tiles, r, L.rows, L.cols)) { toast("Não há célula livre. Aumente a matriz ou divida uma tela.", "bad"); return; }
+    const t = blankTile(r);
+    L.tiles.push(t); ui.wallSel = t.id;
+    wallCommit("Tela criada. Escolha o conteúdo em ⚙.");
+  }
+  function dupTile(id) {
+    const L = currentLayout(), t = L.tiles.find(o => o.id === id);
+    if (!t) return;
+    const r = Wall.firstFree(L.tiles, L.rows, L.cols, t.w, t.h) || Wall.firstFree(L.tiles, L.rows, L.cols);
+    if (!r) { toast("Sem espaço livre para duplicar. Aumente a matriz.", "bad"); return; }
+    const c = Object.assign(U.clone(t), { id: newTileId() }, r);
+    L.tiles.push(c); ui.wallSel = c.id;
+    wallCommit(r.w === t.w && r.h === t.h ? "Tela duplicada." : "Tela duplicada em 1×1 (não havia espaço do mesmo tamanho).");
+  }
+  function delTile(id) {
+    const L = currentLayout(), t = L.tiles.find(o => o.id === id);
+    if (!t) return;
+    L.tiles = L.tiles.filter(o => o !== t);
+    if (ui.wallSel === id) ui.wallSel = null;
+    wallCommit("Tela removida (Ctrl+Z desfaz).");
+  }
+  function splitTile(id) {
+    const L = currentLayout(), out = Wall.split(L.tiles, id, newTileId);
+    if (!out) return;
+    L.tiles = out;
+    wallCommit("Tela dividida em monitores individuais.");
+  }
+  function moveTile(id, x, y) {
+    const L = currentLayout(), out = Wall.move(L.tiles, id, x, y, L.rows, L.cols);
+    if (!out) return false;
+    L.tiles = out; return true;
+  }
+  function resizeTile(id, w, h) {
+    const L = currentLayout(), out = Wall.resize(L.tiles, id, w, h, L.rows, L.cols);
+    if (!out) return false;
+    L.tiles = out; return true;
+  }
+
+  /* arrastar para mover / redimensionar, com encaixe nas células da matriz */
+  let wallDrag = null;
+  function cellAt(e) {
+    const wall = $("#wall"), L = currentLayout(), r = wall.getBoundingClientRect();
+    return {
+      x: U.clamp(Math.floor((e.clientX - r.left) / (r.width / L.cols)), 0, L.cols - 1),
+      y: U.clamp(Math.floor((e.clientY - r.top) / (r.height / L.rows)), 0, L.rows - 1)
+    };
+  }
+  function showGhost(rect, ok) {
+    const g = $("#wallGhost");
+    if (!g) return;
+    g.hidden = false;
+    g.className = "wall-ghost " + (ok ? "ok" : "bad");
+    g.style.gridColumn = `${rect.x + 1} / span ${rect.w}`;
+    g.style.gridRow = `${rect.y + 1} / span ${rect.h}`;
+    g.textContent = `${rect.w}×${rect.h}`;
+  }
+  document.addEventListener("pointerdown", e => {
+    if (!ui.editing || ui.view !== "videowall" || !e.target.closest) return;
+    const mv = e.target.closest("[data-wall-drag]"), rs = e.target.closest("[data-wall-resize]");
+    const body = !mv && !rs && e.target.closest("#wall .tile");
+    if (body && (e.target.closest("button, select, input, [contenteditable]"))) return;
+    const handle = mv || rs || body;
+    if (!handle) return;
+    const id = mv ? mv.dataset.wallDrag : rs ? rs.dataset.wallResize : body.dataset.tileId;
+    const t = findTile(id);
+    if (!t) return;
+    selectTile(id);
+    if (body && e.button !== 0) return;
+    e.preventDefault();
+    const c = cellAt(e);
+    wallDrag = { id, mode: rs ? "resize" : "move", dx: c.x - t.x, dy: c.y - t.y, rect: { x: t.x, y: t.y, w: t.w, h: t.h }, moved: false, pid: e.pointerId };
+    $(`#wall .tile[data-tile-id="${CSS.escape(id)}"]`).classList.add("is-dragging");
+  });
+  document.addEventListener("pointermove", e => {
+    if (!wallDrag || e.pointerId !== wallDrag.pid) return;
+    const L = currentLayout(), t = findTile(wallDrag.id), c = cellAt(e);
+    let r;
+    if (wallDrag.mode === "move") r = { x: U.clamp(c.x - wallDrag.dx, 0, L.cols - t.w), y: U.clamp(c.y - wallDrag.dy, 0, L.rows - t.h), w: t.w, h: t.h };
+    else r = { x: t.x, y: t.y, w: Math.max(1, c.x - t.x + 1), h: Math.max(1, c.y - t.y + 1) };
+    if (r.x !== wallDrag.rect.x || r.y !== wallDrag.rect.y || r.w !== wallDrag.rect.w || r.h !== wallDrag.rect.h) wallDrag.moved = true;
+    wallDrag.rect = r;
+    if (!wallDrag.moved) return;
+    const ok = wallDrag.mode === "move" ? !!Wall.move(L.tiles, t.id, r.x, r.y, L.rows, L.cols) : !!Wall.resize(L.tiles, t.id, r.w, r.h, L.rows, L.cols);
+    showGhost(r, ok);
+  });
+  function endWallDrag(e) {
+    if (!wallDrag || (e && e.pointerId !== wallDrag.pid)) return;
+    const d = wallDrag; wallDrag = null;
+    const g = $("#wallGhost"); if (g) g.hidden = true;
+    $$("#wall .is-dragging").forEach(n => n.classList.remove("is-dragging"));
+    if (!d.moved || e.type === "pointercancel") return;
+    const t = findTile(d.id), r = d.rect;
+    if (r.x === t.x && r.y === t.y && r.w === t.w && r.h === t.h) return;
+    const ok = d.mode === "move" ? moveTile(d.id, r.x, r.y) : resizeTile(d.id, r.w, r.h);
+    if (ok) wallCommit(d.mode === "resize" && r.w * r.h > 1 ? `Tela ocupando ${r.w}×${r.h} monitores.` : "");
+    else toast(d.mode === "move" ? "Posição ocupada. Solte em área livre ou sobre uma tela do mesmo tamanho para trocar." : "Não há espaço livre para esse tamanho.", "bad");
+  }
+  document.addEventListener("pointerup", endWallDrag);
+  document.addEventListener("pointercancel", endWallDrag);
+
+  // nome da tela editado direto no rótulo
+  document.addEventListener("keydown", e => {
+    const tt = e.target.closest && e.target.closest("[data-title-for]");
+    if (tt && (e.key === "Enter" || e.key === "Escape")) { e.preventDefault(); if (e.key === "Escape") tt.dataset.cancel = "1"; tt.blur(); }
+  });
+  document.addEventListener("focusout", e => {
+    const tt = e.target.closest && e.target.closest("[data-title-for]");
+    if (!tt) return;
+    const t = findTile(tt.dataset.titleFor);
+    if (!t || tt.dataset.cancel) { delete tt.dataset.cancel; render(); return; }
+    const L = currentLayout(), auto = Views.sourceName(state, Wall.current(t.items, Wall.elapsed()).item.source);
+    const v = tt.textContent.replace(/\s+/g, " ").trim().slice(0, 40);
+    const next = v === auto ? "" : v;
+    if (next !== t.title) { t.title = next; save(true); }
+    render();
+  });
+
+  /* painel da tela: nome, aparência, posição/tamanho e playlist */
+  function openTile(id, focusSel) {
+    const L = currentLayout(), t = L.tiles.find(o => o.id === id);
+    if (!t) return;
+    const n = Wall.ordered(L.tiles).indexOf(t) + 1, k = t.items.length;
+    const total = t.items.reduce((sum, it) => sum + Wall.duration(it.duration), 0);
+    const rows = t.items.map((it, q) => `<li class="pl-item"><span class="n">${q + 1}</span>
+        <select aria-label="Conteúdo ${q + 1}" data-action="pl-src" data-k="${q}">${Views.sourceOptions(state, it.source)}</select>
+        <input type="number" min="${Wall.MIN}" max="${Wall.MAX}" step="1" aria-label="Duração do conteúdo ${q + 1} em segundos" data-action="pl-dur" data-k="${q}" value="${Wall.duration(it.duration)}" ${k < 2 ? "disabled" : ""}>
+        <span class="acts">
+          <button type="button" class="icon-btn sm" data-action="pl-up" data-k="${q}" ${q === 0 ? "disabled" : ""} aria-label="Mover para cima">↑</button>
+          <button type="button" class="icon-btn sm" data-action="pl-down" data-k="${q}" ${q === k - 1 ? "disabled" : ""} aria-label="Mover para baixo">↓</button>
+          <button type="button" class="icon-btn sm" data-action="pl-del" data-k="${q}" ${k < 2 ? "disabled" : ""} aria-label="Remover">✕</button>
+        </span></li>`).join("");
+    const numIn = (key, label, min, max) => `<label class="field">${label}<input type="number" min="${min}" max="${max}" step="1" data-tgeo="${key}" value="${key === "x" || key === "y" ? t[key] + 1 : t[key]}"></label>`;
+    openDrawer(`<div class="drawer-head"><div><strong>TV ${String(n).padStart(2, "0")} · ${U.esc(Views.tileTitle(state, t, Wall.current(t.items, Wall.elapsed())))}</strong><small>Layout “${U.esc(L.name)}” · ${t.w}×${t.h} monitor${t.w * t.h > 1 ? "es" : ""}</small></div>
+        <button type="button" class="icon-btn" data-action="drawer-close" aria-label="Fechar">✕</button></div>
+      <form class="drawer-form" id="plForm" data-tile="${U.esc(t.id)}" novalidate>
+        <div class="group-title">Tela</div>
+        <label class="field">Nome exibido<input type="text" maxlength="40" data-tprop="title" value="${U.esc(t.title)}" placeholder="Automático (nome do conteúdo)"></label>
+        <div class="field-row">
+          <label class="field">Ajuste do conteúdo<select data-tprop="fit">
+            <option value="contain" ${t.fit === "contain" ? "selected" : ""}>Encaixar (mostra tudo)</option>
+            <option value="cover" ${t.fit === "cover" ? "selected" : ""}>Preencher (corta bordas)</option></select></label>
+          <label class="check tile-hdr"><input type="checkbox" data-tprop="header" ${t.header ? "checked" : ""}> Mostrar rótulo</label>
+        </div>
+        <div class="group-title">Posição e tamanho <span class="muted">(matriz ${L.cols}×${L.rows})</span></div>
+        <div class="geo-row">${numIn("x", "Coluna", 1, L.cols)}${numIn("y", "Linha", 1, L.rows)}${numIn("w", "Largura", 1, L.cols)}${numIn("h", "Altura", 1, L.rows)}</div>
+        <p class="form-msg" id="geoMsg" role="status" aria-live="polite"></p>
+        <hr>
+        <div class="group-title">Playlist</div>
+        <p class="muted pl-sum">${k} conteúdo${k === 1 ? "" : "s"}${k > 1 ? ` · ciclo de ${total} s. Os conteúdos alternam na ordem abaixo e o ciclo recomeça ao final.` : ". Com um único conteúdo a tela fica fixa e a duração não se aplica."}</p>
+        <ol class="pl-list">${rows}</ol>
+        <button type="button" class="btn" data-action="pl-add" ${k >= 12 ? "disabled" : ""}>＋ Adicionar conteúdo</button>
+        <p class="muted hint-text">Duração de ${Wall.MIN} a ${U.fmt(Wall.MAX)} segundos, até 12 conteúdos por tela. Painéis externos (Power BI, Grafana) permanecem carregados entre as trocas em playlists de até 4 conteúdos.</p>
+      </form>
+      <div class="drawer-foot">
+        <span class="btn-row"><button type="button" class="btn danger" data-action="tile-del" data-tile="${U.esc(t.id)}">Remover tela</button>
+        ${t.w * t.h > 1 ? `<button type="button" class="btn" data-action="tile-split" data-tile="${U.esc(t.id)}">Dividir</button>` : ""}</span>
+        <button type="button" class="btn primary" data-action="drawer-close">Concluir</button></div>`, "playlist");
+    if (focusSel) { const f = $(focusSel); if (f) f.focus(); }
+  }
+  function playlistChanged(id, focusSel) {
+    save(true); render(); openTile(id, focusSel);
+  }
+  function plTile() { const f = $("#plForm"); return f ? findTile(f.dataset.tile) : null; }
+
+  /* ---------- modo TV (v0.4) ---------- */
+  let wakeLock = null, tvUiTimer = null;
+  async function requestWake() {
+    try {
+      if (ui.tv && "wakeLock" in navigator && document.visibilityState === "visible" && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+      }
+    } catch (e) { wakeLock = null; /* sem suporte ou negado: segue normalmente */ }
+  }
+  function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (e) { /* noop */ } wakeLock = null; }
+  function showTvUi() {
+    if (!ui.tv) return;
+    document.body.classList.add("tv-ui");
+    clearTimeout(tvUiTimer);
+    tvUiTimer = setTimeout(() => document.body.classList.remove("tv-ui"), 3000);
+  }
+  function enterTv(fullscreen) {
+    ui.tv = true; ui.view = "videowall"; ui.editing = false;
+    closeDrawer();
+    document.body.classList.add("tv");
+    render();
+    requestWake();
+    if (fullscreen && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    showTvUi();
+  }
+  function exitTv() {
+    ui.tv = false; ui.tvLayout = null;
+    document.body.classList.remove("tv", "tv-ui");
+    releaseWake();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    try {
+      const u = new URL(location.href);
+      ["tv", "layout"].forEach(k => u.searchParams.delete(k));
+      history.replaceState(null, "", u.href);
+    } catch (e) { /* file:// sem history */ }
+    render();
+  }
+  function tvLink() {
+    const u = new URL(location.href);
+    u.search = ""; u.hash = "";
+    u.searchParams.set("tv", "1");
+    u.searchParams.set("layout", currentLayout().id);
+    return u.href;
+  }
+
+  /* ---------- rotação de páginas (v0.4) ---------- */
+  const rot = { forced: false, manual: false, pausedUntil: 0, nextAt: 0 };
+  function rotPages() { return state.rotation.pages.filter(id => state.pages.some(p => p.id === id)); }
+  function rotOn() {
+    return (state.rotation.enabled || rot.forced) && rotPages().length >= 2 && ui.view === "dashboard" && !ui.editing && !ui.tv;
+  }
+  function rotTick() {
+    const pill = $("#rotPill"), now = Date.now();
+    if (!rotOn()) { pill.hidden = true; rot.nextAt = 0; return; }
+    pill.hidden = false;
+    const ms = state.rotation.interval * 1000, t = pill.querySelector(".t");
+    if (!rot.nextAt) rot.nextAt = now + ms;
+    if (rot.manual) { t.textContent = "Rotação pausada"; pill.title = "Clique para retomar a rotação"; return; }
+    if (now < rot.pausedUntil) {
+      rot.nextAt = rot.pausedUntil + ms;
+      t.textContent = `Rotação pausada · retoma em ${Math.ceil((rot.pausedUntil - now) / 1000)} s`;
+      pill.title = "Pausada por interação. Clique para pausar até ser retomada manualmente";
+      return;
+    }
+    if (now >= rot.nextAt) {
+      state.activePage = Wall.nextPage(rotPages(), state.activePage);
+      rot.nextAt = now + ms;
+      render();
+    }
+    const next = state.pages.find(p => p.id === Wall.nextPage(rotPages(), state.activePage));
+    t.textContent = `Rotação · ${next ? next.name : ""} em ${Math.max(0, Math.ceil((rot.nextAt - now) / 1000))} s`;
+    pill.title = "Clique para pausar a rotação";
+  }
+  function rotInteract(e) {
+    if (!rotOn() || rot.manual || (e.target.closest && e.target.closest("#rotPill"))) return;
+    rot.pausedUntil = Date.now() + state.rotation.resumeAfter * 1000;
   }
   let fitFrame = 0;
   new ResizeObserver(() => {
@@ -2383,7 +3550,7 @@ const Views = {
       if (d) d.textContent = fmtTime(tz, { weekday: "long", day: "2-digit", month: "long" }) + " · " + (tz || "");
     });
   }
-  setInterval(() => { updateClocks(); updateLive(); }, 1000);
+  setInterval(() => { updateClocks(); updateLive(); wallTick(); rotTick(); }, 1000);
 
   /* ---------- simulação ---------- */
   function tick() {
@@ -2631,7 +3798,7 @@ const Views = {
 
   function toggleEditing(force) {
     ui.editing = typeof force === "boolean" ? force : !ui.editing;
-    if (!ui.editing) { closeDrawer(); save(true); toast("Alterações salvas neste navegador."); }
+    if (!ui.editing) { closeDrawer(); ui.wallSel = null; save(true); toast("Alterações salvas neste navegador."); }
     render();
   }
 
@@ -2723,9 +3890,95 @@ const Views = {
       if (r.ok) { out.className = "form-msg good"; out.textContent = `Conexão OK · ${r.latency} ms · ${DataHub.paths(r.payload).length} campos encontrados.`; }
       else { out.className = "form-msg bad"; out.textContent = r.error; }
     },
-    "wall-tv": () => {
-      const frame = $(".wall-frame");
-      if (frame && frame.requestFullscreen) frame.requestFullscreen().catch(() => toast("Tela cheia indisponível neste navegador.", "bad"));
+    "wall-tv": () => enterTv(true),
+    "tv-link": () => {
+      const link = tvLink();
+      const fallback = () => prompt("Copie o link do modo TV:", link);
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(link).then(() => toast("Link do modo TV copiado.", "good"), fallback);
+      else fallback();
+    },
+    "layout-new": () => {
+      const L = currentLayout();
+      const name = (prompt("Nome do novo layout:", "Novo layout") || "").trim().slice(0, 40);
+      if (!name) return;
+      if (state.videowall.layouts.length >= 20) { toast("Limite de 20 layouts atingido.", "bad"); return; }
+      const id = slug(name) + "-" + Math.random().toString(36).slice(2, 5);
+      state.videowall.layouts.push(Store.wallLayout({ id, name, rows: L.rows, cols: L.cols, aspect: L.aspect, bezel: L.bezel, background: L.background,
+        tiles: Array.from({ length: L.rows * L.cols }, (_, k) => blankTile({ x: k % L.cols, y: Math.floor(k / L.cols), w: 1, h: 1 })) }, state.pages, 0));
+      state.videowall.activeLayout = id; ui.tvLayout = null; Wall.restart();
+      save(true); render(); toast(`Layout “${name}” criado.`);
+    },
+    "layout-dup": () => {
+      const L = currentLayout();
+      if (state.videowall.layouts.length >= 20) { toast("Limite de 20 layouts atingido.", "bad"); return; }
+      const copy = U.clone(L);
+      copy.name = (L.name + " (cópia)").slice(0, 40);
+      copy.id = slug(copy.name) + "-" + Math.random().toString(36).slice(2, 5);
+      state.videowall.layouts.push(copy);
+      state.videowall.activeLayout = copy.id; ui.tvLayout = null; Wall.restart();
+      save(true); render(); toast("Layout duplicado.");
+    },
+    "layout-rename": () => {
+      const L = currentLayout();
+      const name = (prompt("Novo nome do layout:", L.name) || "").trim().slice(0, 40);
+      if (!name) return;
+      L.name = name; save(true); render();
+    },
+    "layout-del": () => {
+      const v = state.videowall, L = currentLayout();
+      if (v.layouts.length < 2 || !confirm(`Excluir o layout “${L.name}”?`)) return;
+      v.layouts = v.layouts.filter(l => l !== L);
+      v.activeLayout = v.layouts[0].id; ui.tvLayout = null; Wall.restart();
+      save(true); render(); toast("Layout excluído.");
+    },
+    "wall-preset": el => {
+      const L = currentLayout(), p = Wall.PRESETS.find(x => x.id === el.dataset.preset);
+      if (!p) return;
+      const res = Wall.preset(L.tiles, p, newTileId);
+      if (res.lost && !confirm(`${res.lost} tela(s) com conteúdo não cabem no modelo “${p.name}” e serão removidas. Continuar?`)) return;
+      L.rows = p.rows; L.cols = p.cols; L.tiles = res.tiles; ui.wallSel = null;
+      wallCommit(`Modelo “${p.name}” aplicado.`);
+    },
+    "layout-restore": () => {
+      const L = currentLayout(), def = window.COI_DEFAULTS.videowall.layouts.find(l => l.id === L.id);
+      if (!def) { toast("Este layout não existe na configuração padrão. Use Desfazer para voltar alterações.", "bad"); return; }
+      if (!confirm(`Restaurar o layout “${L.name}” como na configuração padrão?`)) return;
+      const fresh = Store.wallLayout(def, state.pages, 0);
+      Object.keys(L).forEach(k => delete L[k]);
+      Object.assign(L, fresh);
+      ui.wallSel = null;
+      wallCommit("Layout restaurado.");
+    },
+    "undo": () => undo(),
+    "redo": () => redo(),
+    "tile-add": el => addTile(el.dataset.x, el.dataset.y),
+    "tile-dup": el => dupTile(el.dataset.tile),
+    "tile-del": el => { closeDrawer(); delTile(el.dataset.tile); },
+    "tile-split": el => { closeDrawer(); splitTile(el.dataset.tile); },
+    "tile-cfg": el => { selectTile(el.dataset.tile); openTile(el.dataset.tile); },
+    "pl-add": () => {
+      const t = plTile();
+      if (!t || t.items.length >= 12) return;
+      t.items.push({ source: "none", duration: 30 });
+      playlistChanged(t.id, `#plForm [data-action="pl-src"][data-k="${t.items.length - 1}"]`);
+    },
+    "pl-up": el => {
+      const t = plTile(), k = +el.dataset.k;
+      if (!t || k < 1) return;
+      [t.items[k - 1], t.items[k]] = [t.items[k], t.items[k - 1]];
+      playlistChanged(t.id, `#plForm [data-action="pl-up"][data-k="${k - 1}"]`);
+    },
+    "pl-down": el => {
+      const t = plTile(), k = +el.dataset.k;
+      if (!t || k >= t.items.length - 1) return;
+      [t.items[k + 1], t.items[k]] = [t.items[k], t.items[k + 1]];
+      playlistChanged(t.id, `#plForm [data-action="pl-down"][data-k="${k + 1}"]`);
+    },
+    "pl-del": el => {
+      const t = plTile();
+      if (!t || t.items.length < 2) return;
+      t.items.splice(+el.dataset.k, 1);
+      playlistChanged(t.id);
     },
     "row-add": el => {
       const coll = el.dataset.coll;
@@ -2768,6 +4021,12 @@ const Views = {
   document.addEventListener("input", e => {
     const t = e.target;
     if (t.closest("#srcForm")) { syncSourceForm(); return; }
+    if (t.closest("#plForm")) return;
+    if (t.dataset.action === "wall-bezel") {
+      const w = $("#wall"); if (w) w.style.setProperty("--bezel", t.value + "px");
+      if (t.nextElementSibling) t.nextElementSibling.textContent = t.value + " px";
+      return;
+    }
     if (t.closest("#drawer")) return onEditorInput(t);
     if (t.dataset.action === "cell") {
       const row = state[t.dataset.coll][+t.dataset.row];
@@ -2791,15 +4050,75 @@ const Views = {
       if (src) { src.enabled = t.checked; save(true); restartSimulation(); updateLive(); toast(`${src.name} ${src.enabled ? "ativada" : "desativada"}.`); }
       return;
     }
-    const vw = state.videowall;
     if (a === "cell") { if (t.tagName === "SELECT") render(); return; }
-    if (a === "tile-src") { vw.tiles[+t.dataset.index] = { source: t.value }; }
-    else if (a === "wall-rows") vw.rows = U.clamp(+t.value, 1, 4);
-    else if (a === "wall-cols") vw.cols = U.clamp(+t.value, 1, 6);
-    else if (a === "wall-labels") vw.labels = t.checked;
+    if (a === "pl-src" || a === "pl-dur") {
+      const tile = plTile(), it = tile && tile.items[+t.dataset.k];
+      if (!it) return;
+      if (a === "pl-src") it.source = t.value;
+      else it.duration = Wall.duration(t.value);
+      playlistChanged(tile.id, `#plForm [data-action="${a}"][data-k="${t.dataset.k}"]`);
+      return;
+    }
+    if (t.dataset.tprop) {
+      const tile = plTile();
+      if (!tile) return;
+      const k = t.dataset.tprop;
+      if (k === "title") tile.title = t.value.trim().slice(0, 40);
+      else if (k === "header") tile.header = t.checked;
+      else if (k === "fit") tile.fit = t.value === "cover" ? "cover" : "contain";
+      playlistChanged(tile.id, `#plForm [data-tprop="${k}"]`);
+      return;
+    }
+    if (t.dataset.tgeo) {
+      const tile = plTile(), Lg = currentLayout();
+      if (!tile) return;
+      const val = k => { const f = $(`#plForm [data-tgeo="${k}"]`); return Math.round(U.num(f.value, 1)); };
+      const nx = val("x") - 1, ny = val("y") - 1, nw = val("w"), nh = val("h");
+      let out = Wall.move(Lg.tiles, tile.id, nx, ny, Lg.rows, Lg.cols);
+      if (out) out = Wall.resize(out, tile.id, nw, nh, Lg.rows, Lg.cols);
+      if (!out) {
+        const m = $("#geoMsg");
+        m.className = "form-msg bad";
+        m.textContent = `Não cabe: a área ${nw}×${nh} na coluna ${nx + 1}, linha ${ny + 1} sai da matriz ou cobre outra tela.`;
+        return;
+      }
+      Lg.tiles = out;
+      playlistChanged(tile.id, `#plForm [data-tgeo="${t.dataset.tgeo}"]`);
+      return;
+    }
+    if (t.dataset.rot) {
+      const r = state.rotation, k = t.dataset.rot;
+      if (k === "enabled") r.enabled = t.checked;
+      else if (k === "page") {
+        r.pages = r.pages.filter(id => id !== t.value);
+        if (t.checked) r.pages = state.pages.map(p => p.id).filter(id => id === t.value || r.pages.includes(id));
+      }
+      else if (k === "interval") { r.interval = U.clamp(Math.round(U.num(t.value, 30)), 10, 3600); t.value = r.interval; }
+      else if (k === "resumeAfter") { r.resumeAfter = U.clamp(Math.round(U.num(t.value, 60)), 10, 600); t.value = r.resumeAfter; }
+      rot.nextAt = 0; rot.pausedUntil = 0;
+      save(true);
+      if (k === "enabled" && r.enabled && rotPages().length < 2) toast("Selecione ao menos 2 páginas para a rotação.", "bad");
+      return;
+    }
+    const L = currentLayout();
+    if (a === "layout-select") { state.videowall.activeLayout = t.value; ui.tvLayout = null; Wall.restart(); }
+    else if (a === "tile-src") {
+      const tile = L.tiles.find(o => o.id === t.dataset.tile);
+      if (!tile) return;
+      tile.items = [{ source: t.value, duration: Wall.duration(tile.items[0] && tile.items[0].duration) }];
+    }
+    else if (a === "wall-aspect") L.aspect = Store.ASPECTS.includes(t.value) ? t.value : "16:9";
+    else if (a === "wall-bezel") L.bezel = U.clamp(Math.round(U.num(t.value, 6)), 0, 24);
+    else if (a === "wall-bg") { if (/^#[0-9a-f]{6}$/i.test(t.value)) L.background = t.value; }
+    else if (a === "wall-seams") L.seams = t.checked;
+    else if (a === "wall-rows" || a === "wall-cols") {
+      const rows = a === "wall-rows" ? +t.value : L.rows, cols = a === "wall-cols" ? +t.value : L.cols;
+      if (!setMatrix(L, rows, cols, true)) { render(); return; }
+    }
+    else if (a === "wall-labels") L.labels = t.checked;
+    else if (a === "wall-progtv") L.progressTv = t.checked;
     else if (t.dataset.setting === "refresh") { t.value = state.settings.refresh; return; }
     else return;
-    while (vw.tiles.length < vw.rows * vw.cols) vw.tiles.push({ source: "none" });
     save(true); render();
   });
 
@@ -2920,8 +4239,39 @@ const Views = {
   $("#scrim").addEventListener("click", closeDrawer);
   $("#srcPill").addEventListener("click", () => setView("dados"));
   document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && ui.tv) showTvUi();
+    const typing = e.target.closest && e.target.closest("input, select, textarea, [contenteditable]");
+    if (ui.editing && !typing && (e.ctrlKey || e.metaKey) && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+      if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); return; }
+    }
+    // teclado no editor do videowall: setas movem, Shift+setas redimensionam, Del remove, Ctrl+D duplica
+    if (ui.editing && ui.view === "videowall" && ui.wallSel && !typing && !ui.drawer) {
+      const t = findTile(ui.wallSel);
+      if (!t) return;
+      const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+      if (dir) {
+        e.preventDefault();
+        const ok = e.shiftKey ? resizeTile(t.id, t.w + dir[0], t.h + dir[1]) : moveTile(t.id, t.x + dir[0], t.y + dir[1]);
+        if (ok) { save(true); render(); selectTile(t.id, true); }
+        return;
+      }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); delTile(t.id); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") { e.preventDefault(); dupTile(t.id); return; }
+      if (e.key === "Enter") { e.preventDefault(); openTile(t.id); return; }
+      if (e.key === "Escape") { selectTile(null); return; }
+    }
     if (e.key === "Escape" && (ui.drawer || $("#sidebar").classList.contains("open"))) closeDrawer();
   });
+  document.addEventListener("mousemove", showTvUi, { passive: true });
+  ["pointerdown", "keydown", "wheel", "touchstart"].forEach(ev => document.addEventListener(ev, rotInteract, { capture: true, passive: true }));
+  $("#tvExit").addEventListener("click", exitTv);
+  $("#rotPill").addEventListener("click", () => {
+    rot.manual = !rot.manual; rot.pausedUntil = 0; rot.nextAt = Date.now() + state.rotation.interval * 1000;
+    rotTick();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") requestWake(); });
   document.addEventListener("fullscreenchange", () => {
     document.body.classList.toggle("presenting", document.fullscreenElement === document.documentElement);
     setTimeout(fitStages, 60);
@@ -2933,8 +4283,26 @@ const Views = {
     if (kind === "data") onSourceData(id);
     updateLive();
   });
+  // Parâmetros de URL: ?tv=1&layout=<id> (videowall em modo TV) · ?view=dashboard&rotate=1 (apresentação com rotação)
+  let urlWarn = "";
+  try {
+    const qs = new URLSearchParams(location.search);
+    if (qs.get("tv") === "1") {
+      const id = qs.get("layout");
+      if (id && state.videowall.layouts.some(l => l.id === id)) ui.tvLayout = id;
+      else if (id) urlWarn = `Layout “${id}” não encontrado — exibindo o layout ativo.`;
+      ui.tv = true; ui.view = "videowall";
+    } else if (VIEW_META[qs.get("view")]) {
+      ui.view = qs.get("view");
+      if (qs.get("rotate") === "1") { rot.forced = true; ui.kiosk = true; }
+    }
+  } catch (e) { /* sem parâmetros */ }
+
+  hist.last = snap(); syncHist();
   render();
   restartSimulation();
+  if (ui.tv) { requestWake(); showTvUi(); }
+  if (urlWarn) toast(urlWarn, "bad");
 })();
   </script>
 </body>
