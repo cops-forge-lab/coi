@@ -282,12 +282,4 @@ O repositório foi estruturado como uma base modular. Novos componentes podem se
 
 **COI Videowall Forge** é uma iniciativa voltada à estruturação de referências, ferramentas e aceleradores para ambientes de operações integradas.
 
----
 
-## Autoria e colaboração
-
-Desenvolvido com a colaboração de **andremellotech**.
-
-> Para que a coautoria seja reconhecida oficialmente pelo GitHub, inclua também o trailer abaixo na mensagem do commit:
->
-> `Co-authored-by: andremellotech <andremello@outlook.com>`
