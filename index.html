@@ -1,0 +1,2941 @@
+<!doctype html>
+<html lang="pt-BR">
+<!--
+  COI Forge v0.3.0 — arquivo único da aplicação.
+  Seções: estilos (<style>) · configuração padrão (#coi-defaults) · Store · DataHub · Widgets · Views · App
+  Documentação completa: README.md
+-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="COI Forge — plataforma web configurável para estruturação de Centros de Operações Integradas: dashboards, KPIs, alarmes, videowall, arquitetura e infraestrutura.">
+  <meta name="theme-color" content="#0f172a">
+  <title>COI Forge</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d28d9'/%3E%3Cpath fill='%23fff' d='M7 8h8v7H7zM17 8h8v4h-8zM17 14h8v10h-8zM7 17h8v7H7z'/%3E%3C/svg%3E" type="image/svg+xml">
+  <style>
+/* =========================================================
+   COI Forge — estilos
+   ========================================================= */
+:root {
+  --accent: #6d28d9;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --bg: #f2f4f8;
+  --surface: #ffffff;
+  --surface-2: #f7f8fb;
+  --text: #121a2b;
+  --muted: #64708a;
+  --border: #e1e6ef;
+  --sidebar: #0d1320;
+  --sidebar-text: #a9b4c6;
+  --good: #0f9f6e;
+  --warn: #d98a05;
+  --bad: #dc3545;
+  --info: #3b82f6;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 4px 14px rgba(16, 24, 40, .05);
+  --row: 88px;
+  --gap: 14px;
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --bg: #090e18;
+  --surface: #111827;
+  --surface-2: #0d1422;
+  --text: #e8edf6;
+  --muted: #8d9ab0;
+  --border: #1f2a3d;
+  --sidebar: #070b13;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 "Segoe UI", Inter, system-ui, -apple-system, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 12px; }
+
+/* ---------- layout ---------- */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  background: var(--sidebar); color: #fff; padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 18px; z-index: 30;
+}
+.brand { display: flex; gap: 11px; align-items: center; padding: 0 6px; }
+.brand-mark { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; flex: none; }
+.brand-mark svg { width: 20px; fill: #fff; }
+.brand strong { display: block; font-size: 16px; letter-spacing: .2px; }
+.brand small { display: block; color: var(--sidebar-text); font-size: 11.5px; line-height: 1.3; }
+
+.nav, .page-list { display: flex; flex-direction: column; gap: 2px; }
+.nav button, .page-list button {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: 0; color: var(--sidebar-text);
+  padding: 10px 12px; border-radius: 8px; cursor: pointer; text-align: left;
+}
+.nav button:hover, .page-list button:hover { background: #ffffff10; color: #fff; }
+.nav button.active { background: var(--accent); color: #fff; }
+.page-list button.active { background: #ffffff14; color: #fff; }
+.page-list small { margin-left: auto; font-size: 11px; background: #ffffff14; padding: 1px 7px; border-radius: 99px; }
+.ico { width: 18px; text-align: center; opacity: .9; }
+.nav-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #5f6b80; padding: 0 12px 6px; }
+.sidebar-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 6px; color: #5f6b80; font-size: 11px; }
+.live { display: flex; align-items: center; gap: 8px; background: #ffffff0d; border: 1px solid #ffffff14; color: #cfd7e4; border-radius: 99px; padding: 6px 11px; cursor: pointer; font-size: 12px; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: pulse 2s infinite; }
+.live.off .pulse { background: #6b7280; animation: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(15, 159, 110, .6); } 70% { box-shadow: 0 0 0 7px rgba(15, 159, 110, 0); } 100% { box-shadow: 0 0 0 0 rgba(15, 159, 110, 0); } }
+
+.shell { min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px;
+  min-height: 70px; padding: 10px 26px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-title { min-width: 0; flex: 1; }
+.topbar-title h1 { font-size: 19px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-title p { margin: 0; color: var(--muted); font-size: 12.5px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.clock { color: var(--muted); font-size: 12.5px; margin-right: 6px; white-space: nowrap; }
+.icon-btn.menu-btn { display: none; }
+.view { padding: 22px 26px 40px; outline: none; max-width: 1680px; width: 100%; margin: 0 auto; }
+
+/* ---------- buttons / fields ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  padding: 8px 13px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight: 500;
+}
+.btn:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.icon-btn {
+  width: 36px; height: 36px; display: inline-grid; place-items: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; cursor: pointer; font-size: 15px;
+}
+.icon-btn.sm { width: 28px; height: 28px; font-size: 12px; }
+.icon-btn:hover { border-color: var(--accent); }
+.icon-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-weight: 600; font-size: 12.5px; }
+.field input:not([type="range"]):not([type="color"]), .field select, .field textarea,
+.data-table input, .data-table select, .field-inline select {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-2); font-weight: 400;
+}
+.field textarea { resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+.field input[type="color"] { width: 64px; height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 2px; background: var(--surface-2); }
+.field input[type="range"] { accent-color: var(--accent); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.check { display: flex; align-items: center; gap: 8px; margin: 6px 0 14px; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* ---------- chips / status ---------- */
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.good { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.chip.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.chip.bad  { background: color-mix(in srgb, var(--bad) 14%, transparent);  color: var(--bad); }
+.chip.info { background: color-mix(in srgb, var(--info) 14%, transparent); color: var(--info); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.good { background: var(--good); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+.good { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+
+/* ---------- tabs / editbar ---------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; overflow-x: auto; }
+.tab { background: none; border: 0; padding: 10px 14px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-weight: 600; }
+.tab.active { color: var(--text); border-color: var(--accent); }
+.editbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 12px; margin-bottom: 16px; border-radius: var(--radius);
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent); background: var(--accent-soft);
+}
+.hint { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+/* ---------- grid / widgets ---------- */
+.grid {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: var(--row); grid-auto-flow: row dense; gap: var(--gap);
+}
+.widget {
+  grid-column: span var(--w); grid-row: span var(--h);
+  position: relative; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 14px 16px; overflow: hidden;
+  transition: box-shadow .15s, border-color .15s, opacity .15s;
+}
+.w-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-height: 22px; }
+.w-head h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.w-body { flex: 1; min-height: 0; position: relative; }
+.w-tools { display: flex; gap: 4px; }
+.w-tools button { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; font-size: 12px; display: grid; place-items: center; }
+.w-tools button:hover { border-color: var(--accent); color: var(--accent); }
+.drag-handle { cursor: grab; color: var(--muted); }
+
+body.editing .view > .grid .widget { border-style: dashed; border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); cursor: grab; }
+body.editing .view > .grid .w-body { pointer-events: none; user-select: none; }
+.widget.dragging { opacity: .4; }
+.widget.drop-before { box-shadow: -4px 0 0 0 var(--accent); }
+.widget.drop-after { box-shadow: 4px 0 0 0 var(--accent); }
+.resize-handle {
+  position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 50%, var(--accent) 50%, var(--accent) 60%, transparent 60%, transparent 70%, var(--accent) 70%, var(--accent) 80%, transparent 80%);
+  border-radius: 0 0 8px 0; opacity: .8;
+}
+.widget.resizing { border-color: var(--accent); z-index: 2; }
+.widget.resizing::after { content: attr(data-size); position: absolute; right: 26px; bottom: 6px; background: var(--accent); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 6px; }
+
+.empty, .empty-page { color: var(--muted); display: grid; place-items: center; text-align: center; height: 100%; font-size: 12.5px; padding: 10px; }
+.empty-page { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 60px 20px; gap: 6px; }
+.empty-page p { margin: 0 0 10px; }
+
+/* KPI */
+.kpi { display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 8px; }
+.kpi-value { font-size: clamp(24px, 2.4vw, 34px); font-weight: 700; letter-spacing: -.5px; color: var(--text); line-height: 1.05; }
+.kpi-value .unit { font-size: .5em; font-weight: 600; color: var(--muted); margin-left: 2px; }
+.kpi-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
+
+/* line chart */
+.chart { display: flex; flex-direction: column; height: 100%; }
+.chart-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.chart-head strong { font-size: 22px; }
+.chart-head .unit { font-size: 12px; color: var(--muted); font-weight: 500; }
+.legend-target { font-size: 12px; margin-left: auto; }
+.line-svg { flex: 1; width: 100%; min-height: 0; overflow: visible; }
+.line-path { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.target-line { stroke: var(--warn); stroke-width: 1.4; stroke-dasharray: 5 4; }
+
+/* bars */
+.bars { display: flex; flex-direction: column; justify-content: space-around; height: 100%; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: minmax(70px, 30%) 1fr auto; align-items: center; gap: 10px; font-size: 12.5px; }
+.bar-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.bar-track { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { display: block; height: 100%; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 65%, #fff), var(--accent)); border-radius: 99px; transition: width .6s ease; }
+.bar-val { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* gauge */
+.gauge { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gauge svg { width: 100%; max-width: 260px; max-height: calc(100% - 22px); }
+.gauge-bg, .gauge-fg { fill: none; stroke-width: 16; stroke-linecap: round; }
+.gauge-bg { stroke: var(--surface-2); stroke: color-mix(in srgb, var(--muted) 18%, transparent); }
+.gauge-fg { stroke: var(--good); transition: stroke-dasharray .6s ease; }
+.gauge-fg.warn { stroke: var(--warn); } .gauge-fg.bad { stroke: var(--bad); }
+.gauge-target { stroke: var(--text); stroke-width: 3; stroke-linecap: round; }
+.gauge-value { margin-top: -38px; display: flex; align-items: baseline; gap: 2px; }
+.gauge-value strong { font-size: 28px; }
+.gauge-value span { color: var(--muted); font-weight: 600; }
+.gauge-meta { font-size: 12px; }
+
+/* alarms */
+.alarm-list, .status-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; height: 100%; }
+.alarm { display: grid; grid-template-columns: 4px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.alarm:last-child { border-bottom: 0; }
+.alarm .sev { width: 4px; height: 26px; border-radius: 4px; background: var(--info); }
+.alarm.lvl-bad .sev { background: var(--bad); } .alarm.lvl-warn .sev { background: var(--warn); }
+.alarm-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alarm time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+
+/* status */
+.status-sum { margin-bottom: 6px; } .status-sum strong { font-size: 20px; }
+.status-list { height: calc(100% - 34px); }
+.status-list li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.status-list li:last-child { border-bottom: 0; }
+.status-list .chip { margin-left: auto; }
+
+/* table */
+.table-wrap { overflow: auto; height: 100%; }
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.table-wrap th { text-align: left; color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+.table-wrap td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.table-wrap tr:last-child td { border-bottom: 0; }
+
+/* text */
+.text-body { overflow-y: auto; height: 100%; font-size: 13.5px; }
+.text-body p { margin: 0 0 8px; }
+
+/* clock */
+.clock-widget { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.clock-time { font-size: clamp(28px, 3vw, 44px); font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.clock-date { text-transform: capitalize; font-size: 12.5px; }
+
+/* camera */
+.t-camera { padding: 10px; }
+.camera { position: relative; height: 100%; border-radius: 8px; overflow: hidden; background: #05080e; color: #e5e7eb; font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
+.camera img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-noise { position: absolute; inset: 0; background:
+  repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+  radial-gradient(ellipse at center, #1c2536 0%, #05080e 75%); }
+.cam-nosignal { position: absolute; inset: 0; display: grid; place-items: center; color: #6b7280; letter-spacing: .12em; text-transform: uppercase; }
+.cam-rec { position: absolute; top: 8px; left: 10px; display: flex; align-items: center; gap: 5px; color: #f87171; font-weight: 700; }
+.cam-rec i { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: blink 1.4s infinite; }
+.cam-info { position: absolute; left: 10px; bottom: 8px; background: #00000080; padding: 2px 6px; border-radius: 4px; }
+.cam-time { position: absolute; right: 10px; top: 8px; }
+@keyframes blink { 50% { opacity: .2; } }
+
+/* embed */
+.embed { width: 100%; height: 100%; border: 0; border-radius: 8px; background: var(--surface-2); }
+
+/* ---------- cards / sections ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+.card h2, .block-title { font-size: 15px; margin: 0 0 14px; }
+.block-title { margin: 24px 0 12px; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); margin-bottom: var(--gap); }
+.stat { display: flex; flex-direction: column; gap: 6px; }
+.stat strong { font-size: 26px; }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+.section-head h2 { margin: 0; }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.legend .dot { margin-left: 8px; }
+
+/* architecture */
+.layers { display: flex; flex-direction: column; gap: 8px; }
+.layer { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); position: relative; }
+.layer + .layer::before { content: ""; position: absolute; left: 64px; top: -9px; width: 2px; height: 8px; background: var(--border); }
+.layer-name { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.layer-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.node { padding: 6px 11px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--muted); font-size: 12.5px; }
+.node.good { border-left-color: var(--good); color: var(--text); }
+.node.warn { border-left-color: var(--warn); color: var(--text); }
+.node.bad  { border-left-color: var(--bad);  color: var(--text); }
+
+/* data table */
+.table-wrap.card { padding: 0; height: auto; }
+.data-table th { background: var(--surface); }
+.data-table td { vertical-align: middle; }
+.data-table input, .data-table select { padding: 6px 8px; min-width: 90px; }
+.data-table input[type="number"] { width: 80px; min-width: 70px; }
+.table-foot { padding: 12px 14px; border-top: 1px solid var(--border); font-size: 12px; }
+
+/* settings */
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gap); align-items: start; }
+
+/* ---------- videowall ---------- */
+.wall-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: var(--gap); padding: 12px 16px; }
+.field-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.field-inline label:not(.check) { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 12.5px; }
+.field-inline select { width: auto; padding: 6px 8px; }
+.field-inline .check { margin: 0; }
+.wall-meta { font-size: 12px; margin-left: auto; }
+.wall-frame { background: #05070c; border-radius: 14px; padding: 14px; border: 1px solid #1c2433; }
+.wall {
+  display: grid; gap: 6px;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  aspect-ratio: calc(var(--cols) * 16) / calc(var(--rows) * 9);
+  max-height: calc(100vh - 220px); margin: 0 auto;
+}
+.tile { position: relative; background: #0b111c; border: 2px solid #1b2232; border-radius: 4px; overflow: hidden; min-width: 0; min-height: 0; }
+.tile-screen { position: absolute; inset: 0; overflow: hidden; }
+.tile-label { position: absolute; top: 6px; left: 6px; z-index: 3; font-size: 10.5px; color: #cbd5e1; background: #000000a6; padding: 2px 7px; border-radius: 4px; max-width: calc(100% - 12px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile-label b { color: #fff; margin-right: 4px; }
+.tile-select { position: absolute; bottom: 6px; left: 6px; right: 6px; z-index: 3; opacity: 0; transition: opacity .15s; }
+.tile:hover .tile-select, .tile:focus-within .tile-select, body.editing .tile-select { opacity: 1; }
+.tile-select select { width: 100%; font-size: 11.5px; padding: 4px 6px; border-radius: 6px; border: 1px solid #334155; background: #0f172ae6; color: #e2e8f0; }
+.stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; background: var(--bg); }
+.stage-page { width: 1600px; padding: 20px; }
+.stage-widget { width: 640px; height: 360px; padding: 0; }
+.stage-widget .widget { height: 100%; border-radius: 0; border: 0; padding: 16px 18px; }
+.wall.labeled .stage-widget .w-head { visibility: hidden; }
+.no-signal { position: absolute; inset: 0; display: grid; place-items: center; color: #475569; font: 600 12px ui-monospace, Consolas, monospace; letter-spacing: .2em;
+  background: repeating-linear-gradient(45deg, #0b111c 0 10px, #0e1522 10px 20px); }
+.wall-frame:fullscreen { padding: 0; border: 0; border-radius: 0; display: grid; place-items: center; background: #000; }
+.wall-frame:fullscreen .wall { width: 100vw; max-height: 100vh; gap: 4px; }
+.wall-frame:fullscreen .tile-select { display: none; }
+
+/* ---------- drawer / toast ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(5, 8, 15, .45); z-index: 40; }
+.drawer {
+  position: fixed; top: 0; right: 0; height: 100%; width: min(400px, 100%); z-index: 50;
+  background: var(--surface); border-left: 1px solid var(--border); box-shadow: -18px 0 40px rgba(0, 0, 0, .18);
+  display: flex; flex-direction: column; transform: translateX(105%); transition: transform .22s ease; visibility: hidden;
+}
+.drawer.open { transform: none; visibility: visible; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.drawer-head strong { display: block; font-size: 15px; }
+.drawer-head small { color: var(--muted); }
+.drawer-form, .lib { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.drawer-form hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0 16px; }
+.drawer-foot { display: flex; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--border); }
+.lib { display: grid; gap: 8px; align-content: start; }
+.lib-item { display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; }
+.lib-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+.lib-item strong { display: block; font-size: 13.5px; }
+.lib-item small { color: var(--muted); font-size: 12px; }
+.lib-ico { width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 17px; flex: none; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); z-index: 60;
+  background: #111827; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px;
+  opacity: 0; pointer-events: none; transition: .2s; box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.good { background: #065f46; } .toast.bad { background: #991b1b; }
+
+/* ---------- modo apresentação ---------- */
+body.presenting .sidebar, body.presenting .topbar-actions .btn, body.presenting .icon-btn.menu-btn { display: none; }
+body.presenting .app { grid-template-columns: 1fr; }
+body.presenting .view { max-width: none; }
+
+/* =========================================================
+   v0.3 — fontes de dados e indicadores ao vivo
+   ========================================================= */
+[hidden] { display: none !important; }
+
+.w-src {
+  display: inline-flex; align-items: center; gap: 5px; flex: none; max-width: 60%;
+  font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+  background: var(--surface-2); color: var(--muted); white-space: nowrap;
+}
+.w-src::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.w-src .t { overflow: hidden; text-overflow: ellipsis; }
+.w-src.good { color: var(--good); background: color-mix(in srgb, var(--good) 13%, transparent); }
+.w-src.good::before { animation: blink 2s infinite; }
+.w-src.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
+.w-src.bad  { color: var(--bad);  background: color-mix(in srgb, var(--bad) 13%, transparent); }
+.w-src.static::before { animation: none; }
+body.editing .view > .grid .w-src .t { display: none; }
+body.editing .view > .grid .w-src { padding: 4px; }
+.widget.is-stale { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+.widget.is-stale .w-body { opacity: .5; filter: grayscale(.7); transition: opacity .3s; }
+
+.src-pill {
+  display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+}
+.src-pill:hover { border-color: var(--accent); }
+.dot.muted { background: var(--muted); }
+.dot.info { background: var(--info); }
+
+.block-head { margin: 22px 0 12px; }
+.block-head h2 { font-size: 15px; margin: 0; }
+.src-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); gap: var(--gap); }
+.src-card { display: flex; flex-direction: column; gap: 14px; }
+.src-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.src-name { min-width: 0; flex: 1; }
+.src-name strong { display: block; font-size: 14px; }
+.src-name small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.src-status .chip { font-size: 12px; padding: 4px 10px; }
+.src-status .chip .dot { width: 7px; height: 7px; }
+.src-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin: 10px 0 0; }
+.src-meta div { min-width: 0; }
+.src-meta dt { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.src-meta dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.src-error { margin: 10px 0 0; font-size: 12px; color: var(--bad); background: color-mix(in srgb, var(--bad) 9%, transparent); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+.src-bound { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.src-card .btn-row { margin-top: auto; flex-wrap: nowrap; gap: 6px; }
+.src-card .btn-row .btn { padding: 6px 10px; font-size: 12.5px; }
+.src-card .btn-row .danger { margin-left: auto; }
+@media (max-width: 420px) { .src-card .btn-row { flex-wrap: wrap; } }
+
+.switch { position: relative; display: inline-flex; cursor: pointer; flex: none; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switch-ui { width: 38px; height: 22px; border-radius: 99px; background: color-mix(in srgb, var(--muted) 35%, transparent); position: relative; transition: background .15s; }
+.switch-ui::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.switch input:checked + .sr-only + .switch-ui { background: var(--good); }
+.switch input:checked + .sr-only + .switch-ui::after { transform: translateX(16px); }
+.switch input:focus-visible + .sr-only + .switch-ui { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.how { margin-top: var(--gap); }
+.how ol { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 8px; }
+
+.group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 12px; }
+.hint-text { font-weight: 400; font-size: 11.5px; line-height: 1.4; }
+.bind-preview { font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 14px; overflow-wrap: anywhere; line-height: 1.6; }
+.form-msg { font-size: 12.5px; min-height: 18px; margin: 4px 0 0; overflow-wrap: anywhere; }
+.form-msg.good { color: var(--good); } .form-msg.bad { color: var(--bad); }
+.paths { max-height: 260px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; height: auto; }
+.paths td:first-child { white-space: nowrap; }
+pre.json { margin: 0; max-height: 45vh; overflow: auto; font: 11.5px/1.5 ui-monospace, Consolas, monospace; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; white-space: pre; }
+
+@media (max-width: 600px) {
+  .src-pill { padding: 0 10px; }
+  .src-pill .t { display: none; }
+  #fullBtn { display: none; }
+  .src-meta { grid-template-columns: 1fr; }
+}
+
+/* ---------- responsivo ---------- */
+@media (max-width: 1100px) {
+  .view > .grid .widget.size-s { grid-column: span 6; }
+  .view > .grid .widget.size-m, .view > .grid .widget.size-l { grid-column: span 12; }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .clock { display: none; }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: 0; top: 0; width: 270px; transform: translateX(-100%); transition: transform .22s; z-index: 45; }
+  .sidebar.open { transform: none; }
+  .icon-btn.menu-btn { display: inline-grid; }
+  .topbar { padding: 10px 14px; }
+  .view { padding: 16px 14px 32px; }
+  .hint { margin-left: 0; width: 100%; }
+  .resize-handle { display: none; }
+}
+@media (max-width: 600px) {
+  .view > .grid .widget { grid-column: span 12 !important; }
+  .view > .grid { grid-auto-rows: 80px; }
+  .summary { grid-template-columns: 1fr 1fr; }
+  .topbar-title p { display: none; }
+  #editBtn { padding: 8px 10px; font-size: 12.5px; }
+  .layer { grid-template-columns: 1fr; gap: 8px; }
+  .layer + .layer::before { display: none; }
+  .wall-meta { margin-left: 0; }
+  .field-row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media print {
+  .sidebar, .topbar-actions, .editbar, .tabs { display: none !important; }
+  .app { display: block; }
+  .widget, .card { box-shadow: none; break-inside: avoid; }
+}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 4h8v7H3zM13 4h8v4h-8zM13 10h8v10h-8zM3 13h8v7H3z"/></svg>
+        </span>
+        <div>
+          <strong id="brandName">COI Forge</strong>
+          <small id="brandSub">Centro de Operações Integradas</small>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button type="button" data-view="dashboard"><span class="ico">▦</span>Dashboards</button>
+        <button type="button" data-view="videowall"><span class="ico">▣</span>Videowall</button>
+        <button type="button" data-view="dados"><span class="ico">⇄</span>Fontes de dados</button>
+        <button type="button" data-view="arquitetura"><span class="ico">⌬</span>Arquitetura</button>
+        <button type="button" data-view="infraestrutura"><span class="ico">▤</span>Infraestrutura</button>
+        <button type="button" data-view="configuracoes"><span class="ico">⚙</span>Configurações</button>
+      </nav>
+
+      <div class="nav-section">
+        <span class="nav-label">Páginas</span>
+        <div id="pageList" class="page-list"></div>
+      </div>
+
+      <div class="sidebar-foot">
+        <button type="button" class="live" id="liveToggle" aria-pressed="true">
+          <span class="pulse" aria-hidden="true"></span><span id="liveLabel">Dados simulados</span>
+        </button>
+        <small>v0.3.0</small>
+      </div>
+    </aside>
+
+    <div class="shell">
+      <header class="topbar">
+        <button type="button" class="icon-btn menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div class="topbar-title">
+          <h1 id="viewTitle">Dashboards</h1>
+          <p id="viewSub"></p>
+        </div>
+        <div class="topbar-actions">
+          <time class="clock" id="clock"></time>
+          <button type="button" class="src-pill" id="srcPill"><span class="dot" aria-hidden="true"></span><span class="t">Fontes</span></button>
+          <button type="button" class="icon-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></button>
+          <button type="button" class="icon-btn" id="fullBtn" aria-label="Tela cheia" title="Modo apresentação"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          <button type="button" class="btn primary" id="editBtn" aria-pressed="false">✎ Editar COI</button>
+        </div>
+      </header>
+
+      <main id="view" class="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Painel de edição"></aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+
+  <!-- Configuração padrão: edite este JSON para mudar o conteúdo inicial da plataforma -->
+  <script id="coi-defaults" type="application/json">
+{
+  "version": 3,
+  "settings": {
+    "name": "COI Forge",
+    "subtitle": "Centro de Operações Integradas",
+    "accent": "#6d28d9",
+    "theme": "dark",
+    "simulate": true,
+    "refresh": 5
+  },
+  "activePage": "operacao",
+  "sources": [
+    {
+      "id": "sim",
+      "name": "Simulador COI",
+      "type": "simulated",
+      "url": "",
+      "interval": 3,
+      "staleAfter": 0,
+      "enabled": true
+    }
+  ],
+  "pages": [
+    {
+      "id": "operacao",
+      "name": "Operação",
+      "widgets": [
+        {
+          "id": "op-kpi-1",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.disponibilidade"
+          },
+          "type": "kpi",
+          "title": "Disponibilidade",
+          "w": 3,
+          "h": 2,
+          "props": {
+            "value": 98.7,
+            "unit": "%",
+            "decimals": 1,
+            "target": 97,
+            "direction": "higher",
+            "note": "Ativos críticos",
+            "simulate": true
+          }
+        },
+        {
+          "id": "op-kpi-2",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.eficiencia"
+          },
+          "type": "kpi",
+          "title": "Eficiência operacional",
+          "w": 3,
+          "h": 2,
+          "props": {
+            "value": 92.4,
+            "unit": "%",
+            "decimals": 1,
+            "target": 90,
+            "direction": "higher",
+            "note": "OEE consolidado",
+            "simulate": true
+          }
+        },
+        {
+          "id": "op-kpi-3",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.alarmesAtivos"
+          },
+          "type": "kpi",
+          "title": "Alarmes ativos",
+          "w": 3,
+          "h": 2,
+          "props": {
+            "value": 4,
+            "unit": "",
+            "decimals": 0,
+            "target": 5,
+            "direction": "lower",
+            "note": "2 críticos em tratamento",
+            "simulate": false
+          }
+        },
+        {
+          "id": "op-kpi-4",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.sistemasIntegrados"
+          },
+          "type": "kpi",
+          "title": "Sistemas integrados",
+          "w": 3,
+          "h": 2,
+          "props": {
+            "value": 3,
+            "unit": "/5",
+            "decimals": 0,
+            "target": 5,
+            "direction": "higher",
+            "note": "Integrações online",
+            "simulate": false
+          }
+        },
+        {
+          "id": "op-line-1",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.producao"
+          },
+          "type": "line",
+          "title": "Produção por hora",
+          "w": 8,
+          "h": 4,
+          "props": {
+            "series": "420,445,438,470,462,490,505,498,512,530,524,541",
+            "unit": "t/h",
+            "target": 500,
+            "simulate": true
+          }
+        },
+        {
+          "id": "op-alarms-1",
+          "binding": {
+            "source": "sim",
+            "path": "alarmes"
+          },
+          "type": "alarms",
+          "title": "Alarmes recentes",
+          "w": 4,
+          "h": 4,
+          "props": {
+            "items": "critical|Sensor TS-04 sem comunicação|10:42\nwarning|Temperatura acima da faixa — Silo 03|10:15\ninfo|Integração ERP aguardando validação|09:58\nwarning|Pressão baixa — Linha 02|09:31\ninfo|Troca de turno registrada|08:00"
+          }
+        },
+        {
+          "id": "op-gauge-1",
+          "binding": {
+            "source": "sim",
+            "path": "operacao.capacidade"
+          },
+          "type": "gauge",
+          "title": "Utilização da capacidade",
+          "w": 4,
+          "h": 3,
+          "props": {
+            "value": 76,
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "target": 85,
+            "simulate": true
+          }
+        },
+        {
+          "id": "op-status-1",
+          "binding": {
+            "source": "sim",
+            "path": "integracoes"
+          },
+          "type": "status",
+          "title": "Status das integrações",
+          "w": 4,
+          "h": 3,
+          "props": {
+            "items": "SCADA|online\nCFTV|online\nSensores IoT|online\nERP|pendente\nMES|offline"
+          }
+        },
+        {
+          "id": "op-bar-1",
+          "binding": {
+            "source": "sim",
+            "path": "paradas"
+          },
+          "type": "bar",
+          "title": "Paradas por área",
+          "w": 4,
+          "h": 3,
+          "props": {
+            "labels": "Recebimento,Secagem,Armazenagem,Expedição,Utilidades",
+            "series": "34,52,18,41,12",
+            "unit": "min",
+            "simulate": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "executivo",
+      "name": "Executivo",
+      "widgets": [
+        {
+          "id": "ex-kpi-1",
+          "binding": {
+            "source": "sim",
+            "path": "mes.volume"
+          },
+          "type": "kpi",
+          "title": "Volume processado (mês)",
+          "w": 4,
+          "h": 2,
+          "props": {
+            "value": 182.4,
+            "unit": " mil t",
+            "decimals": 1,
+            "target": 175,
+            "direction": "higher",
+            "note": "Acumulado do mês",
+            "simulate": false
+          }
+        },
+        {
+          "id": "ex-kpi-2",
+          "binding": {
+            "source": "sim",
+            "path": "mes.custoTonelada"
+          },
+          "type": "kpi",
+          "title": "Custo por tonelada",
+          "w": 4,
+          "h": 2,
+          "props": {
+            "value": 18.6,
+            "unit": " R$/t",
+            "decimals": 1,
+            "target": 19.5,
+            "direction": "lower",
+            "note": "Energia + operação",
+            "simulate": false
+          }
+        },
+        {
+          "id": "ex-kpi-3",
+          "type": "kpi",
+          "title": "Incidentes de segurança",
+          "w": 4,
+          "h": 2,
+          "props": {
+            "value": 0,
+            "unit": "",
+            "decimals": 0,
+            "target": 0,
+            "direction": "lower",
+            "note": "Últimos 30 dias",
+            "simulate": false
+          }
+        },
+        {
+          "id": "ex-bar-1",
+          "binding": {
+            "source": "sim",
+            "path": "unidades"
+          },
+          "type": "bar",
+          "title": "Volume por unidade (mil t)",
+          "w": 6,
+          "h": 4,
+          "props": {
+            "labels": "Unidade A,Unidade B,Unidade C,Unidade D",
+            "series": "64,51,39,28",
+            "unit": "mil t",
+            "simulate": false
+          }
+        },
+        {
+          "id": "ex-table-1",
+          "type": "table",
+          "title": "Plano de ação",
+          "w": 6,
+          "h": 4,
+          "props": {
+            "rows": "Ação|Responsável|Prazo|Status\nIntegrar ERP ao data hub|TI|30/11|Em andamento\nInstalar sensores Silo 03|Manutenção|15/11|Planejado\nDefinir rotina de troca de turno|Operação|10/11|Concluído\nHomologar painel executivo|Gestão|05/12|Planejado"
+          }
+        },
+        {
+          "id": "ex-text-1",
+          "type": "text",
+          "title": "Nota de gestão",
+          "w": 12,
+          "h": 2,
+          "props": {
+            "content": "Os indicadores desta página são ilustrativos. Conecte as fontes reais (SCADA, ERP, sensores) na etapa de integração e valide metas com a operação antes de publicar."
+          }
+        }
+      ]
+    },
+    {
+      "id": "seguranca",
+      "name": "Segurança",
+      "widgets": [
+        {
+          "id": "sg-cam-1",
+          "type": "camera",
+          "title": "CAM 01",
+          "w": 3,
+          "h": 3,
+          "props": {
+            "location": "Portaria principal",
+            "url": ""
+          }
+        },
+        {
+          "id": "sg-cam-2",
+          "type": "camera",
+          "title": "CAM 02",
+          "w": 3,
+          "h": 3,
+          "props": {
+            "location": "Recebimento — moega",
+            "url": ""
+          }
+        },
+        {
+          "id": "sg-cam-3",
+          "type": "camera",
+          "title": "CAM 03",
+          "w": 3,
+          "h": 3,
+          "props": {
+            "location": "Pátio de caminhões",
+            "url": ""
+          }
+        },
+        {
+          "id": "sg-cam-4",
+          "type": "camera",
+          "title": "CAM 04",
+          "w": 3,
+          "h": 3,
+          "props": {
+            "location": "Expedição",
+            "url": ""
+          }
+        },
+        {
+          "id": "sg-clock-1",
+          "type": "clock",
+          "title": "Horário local",
+          "w": 4,
+          "h": 3,
+          "props": {
+            "timezone": "America/Sao_Paulo"
+          }
+        },
+        {
+          "id": "sg-alarms-1",
+          "type": "alarms",
+          "title": "Eventos de segurança",
+          "w": 8,
+          "h": 3,
+          "props": {
+            "items": "warning|Acesso fora do horário — Portão 2|10:21\ninfo|Ronda concluída — Setor B|09:40\ninfo|Visitante liberado — Portaria|09:12"
+          }
+        }
+      ]
+    }
+  ],
+  "videowall": {
+    "rows": 2,
+    "cols": 3,
+    "labels": true,
+    "tiles": [
+      {
+        "source": "page:operacao"
+      },
+      {
+        "source": "widget:operacao:op-line-1"
+      },
+      {
+        "source": "widget:seguranca:sg-cam-1"
+      },
+      {
+        "source": "widget:operacao:op-alarms-1"
+      },
+      {
+        "source": "widget:operacao:op-status-1"
+      },
+      {
+        "source": "widget:seguranca:sg-cam-3"
+      }
+    ]
+  },
+  "architecture": [
+    {
+      "layer": "Campo",
+      "system": "Sensores de temperatura e umidade",
+      "vendor": "A definir",
+      "protocol": "Modbus TCP",
+      "status": "Pendente"
+    },
+    {
+      "layer": "Campo",
+      "system": "Câmeras IP",
+      "vendor": "Fornecedor CFTV",
+      "protocol": "RTSP / ONVIF",
+      "status": "Integrado"
+    },
+    {
+      "layer": "Controle",
+      "system": "CLPs das linhas",
+      "vendor": "Fornecedor automação",
+      "protocol": "OPC UA",
+      "status": "Em andamento"
+    },
+    {
+      "layer": "Supervisão",
+      "system": "SCADA",
+      "vendor": "Fornecedor automação",
+      "protocol": "OPC UA",
+      "status": "Integrado"
+    },
+    {
+      "layer": "Dados",
+      "system": "Historiador / data hub",
+      "vendor": "A definir",
+      "protocol": "API REST",
+      "status": "Em andamento"
+    },
+    {
+      "layer": "Negócio",
+      "system": "ERP",
+      "vendor": "Corporativo",
+      "protocol": "API / RFC",
+      "status": "Pendente"
+    },
+    {
+      "layer": "Visualização",
+      "system": "Dashboards e videowall",
+      "vendor": "COI Forge",
+      "protocol": "HTTP / WebSocket",
+      "status": "Em andamento"
+    }
+  ],
+  "assets": [
+    {
+      "item": "Monitor videowall 55\" bordas finas",
+      "qty": 6,
+      "location": "Sala COI",
+      "status": "Planejado",
+      "notes": "Matriz 3x2"
+    },
+    {
+      "item": "Controladora de videowall",
+      "qty": 1,
+      "location": "Rack COI",
+      "status": "Planejado",
+      "notes": "Entradas HDMI/IP"
+    },
+    {
+      "item": "Estação de operador (2 monitores)",
+      "qty": 3,
+      "location": "Sala COI",
+      "status": "Em aquisição",
+      "notes": "Mesa técnica"
+    },
+    {
+      "item": "Servidor de aplicação",
+      "qty": 1,
+      "location": "Datacenter",
+      "status": "Instalado",
+      "notes": "Virtualizado"
+    },
+    {
+      "item": "Nobreak",
+      "qty": 2,
+      "location": "Rack COI",
+      "status": "Em aquisição",
+      "notes": "Autonomia a definir"
+    },
+    {
+      "item": "Switch gerenciável",
+      "qty": 2,
+      "location": "Rack COI",
+      "status": "Instalado",
+      "notes": "VLAN de automação"
+    }
+  ]
+}
+  </script>
+
+  <script>
+"use strict";
+/*!
+ * COI Forge v0.3.0 — plataforma web para Centros de Operações Integradas
+ * Arquivo único: estrutura, estilos, configuração padrão e aplicação.
+ * Licença MIT.
+ */
+/* ==========================================================
+   Configuração padrão (JSON em #coi-defaults)
+   ========================================================== */
+window.COI_DEFAULTS = JSON.parse(document.getElementById("coi-defaults").textContent);
+
+/* ==========================================================
+   Store — persistência, migração e utilitários
+   ========================================================== */
+const U = {
+  esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  },
+  num(value, fallback = 0) {
+    const n = parseFloat(String(value ?? "").replace(",", "."));
+    return Number.isFinite(n) ? n : fallback;
+  },
+  clamp(v, min, max) { return Math.min(max, Math.max(min, v)); },
+  list(text) {
+    return String(text || "").split(",").map(x => U.num(x, NaN)).filter(Number.isFinite);
+  },
+  labels(text) {
+    return String(text || "").split(",").map(x => x.trim()).filter(Boolean);
+  },
+  lines(text) {
+    return String(text || "").split("\n").map(l => l.trim()).filter(Boolean);
+  },
+  fmt(n, decimals = 0) {
+    return Number(n).toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  },
+  ago(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    if (s < 60) return `${s} s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 48) return `${h} h`;
+    return `${Math.floor(h / 24)} dias`;
+  },
+  uid(prefix = "w") {
+    return prefix + "-" + Math.random().toString(36).slice(2, 8);
+  },
+  clone(o) { return JSON.parse(JSON.stringify(o)); },
+  isHttps(url) { return /^https:\/\/[^\s"'<>]+$/i.test(String(url || "").trim()); }
+};
+
+const Store = (() => {
+  const KEY = "coi-forge:state:v3";
+  const LEGACY = ["coi-forge:state:v2"];
+  const SOURCE_TYPES = ["simulated", "rest", "websocket"];
+
+  function valid(s) {
+    return !!s && (s.version === 2 || s.version === 3) && Array.isArray(s.pages) && s.pages.length > 0 &&
+      s.pages.every(p => p && typeof p.id === "string" && Array.isArray(p.widgets));
+  }
+
+  function source(x) {
+    return {
+      id: String(x.id).slice(0, 40),
+      name: String(x.name || "Fonte").slice(0, 40),
+      type: SOURCE_TYPES.includes(x.type) ? x.type : "rest",
+      url: String(x.url || "").trim().slice(0, 500),
+      interval: U.clamp(Math.round(U.num(x.interval, 5)), 1, 3600),
+      staleAfter: U.clamp(Math.round(U.num(x.staleAfter, 0)), 0, 86400),
+      enabled: x.enabled !== false
+    };
+  }
+
+  function normalize(s) {
+    const defaults = window.COI_DEFAULTS;
+    const out = Object.assign(U.clone(defaults), s);
+    out.version = 3;
+    out.settings = Object.assign(U.clone(defaults.settings), s.settings || {});
+    out.videowall = Object.assign(U.clone(defaults.videowall), s.videowall || {});
+    if (!Array.isArray(out.architecture)) out.architecture = [];
+    if (!Array.isArray(out.assets)) out.assets = [];
+    // v2 → v3: configurações antigas recebem as fontes padrão, sem vínculos
+    out.sources = Array.isArray(s.sources)
+      ? s.sources.filter(x => x && typeof x.id === "string").map(source)
+      : U.clone(defaults.sources);
+    // v0.3 (estrutura antiga): a fonte "Arquivo de exemplo" lia data/sample-live.json,
+    // que não existe mais; os widgets dela passam para o Simulador.
+    const legacy = out.sources.filter(x => x.url === "data/sample-live.json").map(x => x.id);
+    if (legacy.length) {
+      out.sources = out.sources.filter(x => !legacy.includes(x.id));
+      if (!out.sources.some(x => x.id === "sim")) out.sources.unshift(U.clone(defaults.sources[0]));
+      out.pages.forEach(p => p.widgets.forEach(w => { if (w.binding && legacy.includes(w.binding.source)) w.binding.source = "sim"; }));
+    }
+    const ids = new Set(out.sources.map(x => x.id));
+    out.pages.forEach(p => p.widgets.forEach(w => {
+      if (w.binding && typeof w.binding.source === "string" && ids.has(w.binding.source)) {
+        w.binding = { source: w.binding.source, path: String(w.binding.path || "").slice(0, 200) };
+      } else delete w.binding;
+    }));
+    if (!out.pages.some(p => p.id === out.activePage)) out.activePage = out.pages[0].id;
+    return out;
+  }
+
+  function load() {
+    for (const key of [KEY, ...LEGACY]) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(key));
+        if (valid(saved)) return normalize(saved);
+      } catch (e) { /* estado inválido: tenta o próximo */ }
+    }
+    return U.clone(window.COI_DEFAULTS);
+  }
+
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* armazenamento indisponível */ }
+  }
+
+  function reset() {
+    try { [KEY, ...LEGACY].forEach(k => localStorage.removeItem(k)); } catch (e) { /* noop */ }
+    return U.clone(window.COI_DEFAULTS);
+  }
+
+  return { load, save, reset, valid, normalize, source, SOURCE_TYPES };
+})();
+
+/* ==========================================================
+   DataHub — fontes de dados (REST, WebSocket, simulador)
+   ========================================================== */
+const DataHub = (() => {
+  const TYPES = {
+    simulated: { label: "Simulador", icon: "◇" },
+    rest:      { label: "REST (polling)", icon: "⇅" },
+    websocket: { label: "WebSocket", icon: "⇄" }
+  };
+  const TIMEOUT = 8000;
+  const runtime = {};
+  const sims = {};
+  const listeners = new Set();
+  let paused = false;
+
+  /* ---------- utilitários ---------- */
+  function urlCheck(url, type) {
+    const u = String(url || "").trim();
+    if (type === "simulated") return "";
+    if (!u) return "Informe a URL da fonte.";
+    if (/\s/.test(u)) return "A URL não pode conter espaços.";
+    if (type === "websocket") {
+      if (/^wss:\/\/.+/i.test(u) || /^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(u)) return "";
+      return "Use wss:// (ou ws://localhost para testes locais).";
+    }
+    if (/^https:\/\/.+/i.test(u) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(u)) return "";
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(u) && !u.startsWith("//")) return "";
+    return "Use https://, um caminho relativo (ex.: dados.json) ou http://localhost para testes.";
+  }
+
+  function resolve(obj, path) {
+    const p = String(path || "").trim();
+    if (!p) return obj;
+    return p.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean)
+      .reduce((o, k) => (o === null || o === undefined ? undefined : o[k]), obj);
+  }
+
+  function paths(obj, prefix = "", out = [], depth = 0) {
+    if (out.length >= 300 || depth > 6 || obj === null || typeof obj !== "object") return out;
+    Object.keys(obj).forEach(k => {
+      if (out.length >= 300) return;
+      const p = prefix ? `${prefix}.${k}` : k;
+      const v = obj[k];
+      out.push(p);
+      if (v && typeof v === "object" && !Array.isArray(v)) paths(v, p, out, depth + 1);
+    });
+    return out;
+  }
+
+  function interval(s) { return U.clamp(Math.round(U.num(s.interval, 5)), 1, 3600) * 1000; }
+  function staleMs(s) {
+    const custom = U.num(s.staleAfter, 0);
+    if (custom > 0) return custom * 1000;
+    if (s.type === "websocket") return 30000;
+    return Math.max(15000, interval(s) * 3);
+  }
+
+  /* ---------- estado de execução ---------- */
+  function rt(id) {
+    return runtime[id] || (runtime[id] = { status: "idle", lastOk: 0, lastError: "", latency: null, count: 0, payload: undefined, gen: 0, retry: 0 });
+  }
+  function emit(id, kind) { listeners.forEach(fn => { try { fn(id, kind); } catch (e) { console.error(e); } }); }
+  function setStatus(id, status, error = "") {
+    const r = rt(id);
+    r.status = status;
+    r.lastError = error;
+    emit(id, "status");
+  }
+  function onData(id, payload, latency) {
+    const r = rt(id);
+    r.payload = payload;
+    r.lastOk = Date.now();
+    r.status = "online";
+    r.lastError = "";
+    r.count++;
+    if (latency !== null && latency !== undefined) r.latency = latency;
+    emit(id, "data");
+  }
+
+  /* ---------- simulador ---------- */
+  function hhmm(d = new Date()) { return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
+  function makeSim() {
+    const drift = (v, pct, min, max) => U.clamp(v + (Math.random() - 0.5) * 2 * Math.max(Math.abs(v) * pct, 0.1), min, max);
+    let prod = [420, 445, 438, 470, 462, 490, 505, 498, 512, 530, 524, 541];
+    let disp = 98.7, ef = 92.4, cap = 76;
+    const integ = [["SCADA", "online"], ["CFTV", "online"], ["Sensores IoT", "online"], ["ERP", "pendente"], ["MES", "offline"]];
+    const mes = { volume: 182.4, custo: 18.6 };
+    const uni = { "Unidade A": 64, "Unidade B": 51, "Unidade C": 39, "Unidade D": 28 };
+    const par = { Recebimento: 34, Secagem: 52, Armazenagem: 18, "Expedição": 41, Utilidades: 12 };
+    const pool = [
+      ["critical", "Sensor TS-04 sem comunicação"], ["warning", "Temperatura acima da faixa — Silo 03"],
+      ["info", "Integração ERP aguardando validação"], ["warning", "Pressão baixa — Linha 02"],
+      ["critical", "Parada não programada — Elevador 01"], ["warning", "Umidade elevada — Secador 02"],
+      ["info", "Troca de turno registrada"], ["warning", "Fila de caminhões acima do limite"]
+    ];
+    let alarms = pool.slice(0, 5).map((a, i) => ({ nivel: a[0], descricao: a[1], hora: hhmm(new Date(Date.now() - (i + 1) * 17 * 60000)) }));
+    return () => {
+      disp = +drift(disp, 0.003, 90, 100).toFixed(1);
+      ef = +drift(ef, 0.005, 80, 100).toFixed(1);
+      cap = Math.round(drift(cap, 0.03, 40, 98));
+      prod = prod.slice(1).concat(Math.max(0, Math.round(drift(prod[prod.length - 1], 0.03, 300, 700))));
+      Object.keys(par).forEach(k => (par[k] = Math.max(0, Math.round(drift(par[k], 0.06, 0, 120)))));
+      mes.volume = +(mes.volume + Math.random() * 0.05).toFixed(1);
+      mes.custo = +drift(mes.custo, 0.004, 15, 22).toFixed(1);
+      Object.keys(uni).forEach(k => (uni[k] = Math.round(drift(uni[k], 0.01, 10, 90))));
+      if (Math.random() < 0.18) {
+        const a = pool[Math.floor(Math.random() * pool.length)];
+        alarms.unshift({ nivel: a[0], descricao: a[1], hora: hhmm() });
+        alarms = alarms.slice(0, 6);
+      } else if (Math.random() < 0.08 && alarms.length > 2) alarms.pop();
+      if (Math.random() < 0.05) {
+        const i = 3 + Math.floor(Math.random() * 2);
+        integ[i][1] = integ[i][1] === "online" ? "pendente" : "online";
+      }
+      return {
+        timestamp: new Date().toISOString(),
+        operacao: {
+          disponibilidade: disp,
+          eficiencia: ef,
+          capacidade: cap,
+          producaoAtual: prod[prod.length - 1],
+          producao: prod.slice(),
+          alarmesAtivos: alarms.length,
+          sistemasIntegrados: integ.filter(x => x[1] === "online").length
+        },
+        alarmes: alarms.slice(),
+        integracoes: integ.map(([sistema, status]) => ({ sistema, status })),
+        paradas: Object.entries(par).map(([area, minutos]) => ({ area, minutos })),
+        mes: { volume: mes.volume, custoTonelada: mes.custo, incidentesSeguranca: 0 },
+        unidades: Object.entries(uni).map(([unidade, volume]) => ({ unidade, volume }))
+      };
+    };
+  }
+
+  /* ---------- conectores ---------- */
+  async function fetchJson(url) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
+    const t0 = performance.now();
+    try {
+      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal, headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch (e) { throw new Error("A resposta não é um JSON válido"); }
+      return { data, latency: Math.round(performance.now() - t0) };
+    } catch (e) {
+      if (e.name === "AbortError") throw new Error(`Tempo esgotado (${TIMEOUT / 1000} s)`);
+      if (e instanceof TypeError) throw new Error("Falha de conexão (verifique URL, CORS ou se a página está em file://)");
+      throw e;
+    } finally { clearTimeout(timer); }
+  }
+
+  async function poll(s, gen) {
+    const r = rt(s.id);
+    if (r.inflight) return;
+    r.inflight = true;
+    try {
+      const { data, latency } = await fetchJson(s.url);
+      if (r.gen === gen) onData(s.id, data, latency);
+    } catch (e) {
+      if (r.gen === gen) setStatus(s.id, "error", e.message);
+    } finally { r.inflight = false; }
+  }
+
+  function openSocket(s, gen) {
+    const r = rt(s.id);
+    if (r.gen !== gen) return;
+    setStatus(s.id, "connecting");
+    let ws;
+    try { ws = new WebSocket(s.url); }
+    catch (e) { setStatus(s.id, "error", "URL de WebSocket inválida"); return; }
+    r.ws = ws;
+    ws.onopen = () => { if (r.gen === gen) { r.retry = 0; setStatus(s.id, "connecting", ""); } };
+    ws.onmessage = ev => {
+      if (r.gen !== gen) return;
+      try { onData(s.id, JSON.parse(ev.data), null); }
+      catch (e) { setStatus(s.id, "error", "Mensagem recebida não é JSON válido"); }
+    };
+    ws.onclose = () => {
+      if (r.gen !== gen || r.ws !== ws) return;
+      r.ws = null;
+      const delay = Math.min(30000, 1000 * 2 ** Math.min(r.retry++, 5));
+      setStatus(s.id, "error", `Conexão encerrada — nova tentativa em ${Math.round(delay / 1000)} s`);
+      r.timer = setTimeout(() => openSocket(s, gen), delay);
+    };
+  }
+
+  function stop(id) {
+    const r = runtime[id];
+    if (!r) return;
+    r.gen++;
+    clearInterval(r.timer);
+    clearTimeout(r.timer);
+    r.timer = null;
+    r.inflight = false;
+    if (r.ws) { const ws = r.ws; r.ws = null; try { ws.close(); } catch (e) { /* noop */ } }
+  }
+
+  function start(s) {
+    const r = rt(s.id);
+    const gen = r.gen;
+    if (!s.enabled) { setStatus(s.id, "disabled"); return; }
+    if (s.type === "simulated") {
+      if (paused) { setStatus(s.id, "paused"); return; }
+      if (!sims[s.id]) sims[s.id] = makeSim();
+      const run = () => { if (r.gen === gen) onData(s.id, sims[s.id](), 0); };
+      run();
+      r.timer = setInterval(run, interval(s));
+      return;
+    }
+    const err = urlCheck(s.url, s.type);
+    if (err) { setStatus(s.id, "error", err); return; }
+    if (s.type === "rest") {
+      setStatus(s.id, "connecting");
+      poll(s, gen);
+      r.timer = setInterval(() => poll(s, gen), interval(s));
+      return;
+    }
+    if (s.type === "websocket") openSocket(s, gen);
+  }
+
+  /* ---------- API pública ---------- */
+  function configure(list, opts = {}) {
+    paused = opts.simulate === false;
+    const ids = new Set(list.map(s => s.id));
+    Object.keys(runtime).forEach(id => {
+      if (!ids.has(id)) { stop(id); delete runtime[id]; delete sims[id]; }
+    });
+    list.forEach(s => {
+      const r = rt(s.id);
+      const sig = JSON.stringify([s.type, s.url, s.interval, s.enabled, s.type === "simulated" && paused]);
+      if (r.sig === sig) return;
+      r.sig = sig;
+      stop(s.id);
+      start(s);
+    });
+  }
+
+  function refresh(s) {
+    const r = runtime[s.id];
+    if (r) r.sig = null;
+  }
+
+  async function test(s) {
+    const err = urlCheck(s.url, s.type);
+    if (err) return { ok: false, error: err };
+    if (s.type === "simulated") return { ok: true, latency: 0, payload: makeSim()() };
+    if (s.type === "rest") {
+      try { const { data, latency } = await fetchJson(s.url); return { ok: true, latency, payload: data }; }
+      catch (e) { return { ok: false, error: e.message }; }
+    }
+    return new Promise(resolveTest => {
+      const t0 = performance.now();
+      let ws, done = false;
+      const finish = result => { if (done) return; done = true; clearTimeout(timer); try { ws && ws.close(); } catch (e) { /* noop */ } resolveTest(result); };
+      const timer = setTimeout(() => finish({ ok: false, error: `Nenhuma mensagem recebida em ${TIMEOUT / 1000} s` }), TIMEOUT);
+      try { ws = new WebSocket(s.url); } catch (e) { finish({ ok: false, error: "URL de WebSocket inválida" }); return; }
+      ws.onmessage = ev => {
+        try { finish({ ok: true, latency: Math.round(performance.now() - t0), payload: JSON.parse(ev.data) }); }
+        catch (e) { finish({ ok: false, error: "Mensagem recebida não é JSON válido" }); }
+      };
+      ws.onerror = () => finish({ ok: false, error: "Falha ao conectar no WebSocket" });
+    });
+  }
+
+  function status(id) {
+    const r = runtime[id];
+    return r ? { status: r.status, lastOk: r.lastOk, lastError: r.lastError, latency: r.latency, count: r.count } :
+      { status: "idle", lastOk: 0, lastError: "", latency: null, count: 0 };
+  }
+
+  function fresh(s) {
+    const r = runtime[s.id];
+    return !!r && s.enabled && r.lastOk > 0 && Date.now() - r.lastOk <= staleMs(s);
+  }
+
+  return {
+    TYPES, configure, refresh, test, status, fresh, staleMs, urlCheck, resolve, paths,
+    payload: id => (runtime[id] ? runtime[id].payload : undefined),
+    on: fn => listeners.add(fn)
+  };
+})();
+
+/* ==========================================================
+   Widgets — biblioteca e vínculo com fontes
+   ========================================================== */
+const LEVELS = {
+  critical: { label: "Crítico", cls: "bad" },
+  warning:  { label: "Atenção", cls: "warn" },
+  info:     { label: "Info",    cls: "info" }
+};
+const STATES = {
+  online:   { label: "Online",   cls: "good" },
+  pendente: { label: "Pendente", cls: "warn" },
+  offline:  { label: "Offline",  cls: "bad" }
+};
+
+function jitter(value, pct, min = -Infinity, max = Infinity) {
+  const step = Math.max(Math.abs(value) * pct, 0.1);
+  return U.clamp(value + (Math.random() - 0.5) * 2 * step, min, max);
+}
+
+const WIDGETS = {
+  kpi: {
+    label: "KPI", icon: "◆", description: "Indicador com meta e status",
+    defaults: { w: 3, h: 2, title: "Novo indicador", props: { value: 100, unit: "%", decimals: 1, target: 95, direction: "higher", note: "", simulate: false } },
+    fields: [
+      { key: "value", label: "Valor", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "decimals", label: "Casas decimais", type: "number", min: 0, max: 3 },
+      { key: "target", label: "Meta", type: "number" },
+      { key: "direction", label: "Melhor quando", type: "select", options: [["higher", "Maior que a meta"], ["lower", "Menor que a meta"]] },
+      { key: "note", label: "Observação", type: "text" },
+      { key: "simulate", label: "Simular variação", type: "checkbox" }
+    ],
+    render(w) {
+      const p = w.props, d = U.clamp(Math.round(U.num(p.decimals, 1)), 0, 3);
+      const v = U.num(p.value), t = U.num(p.target, NaN);
+      let tone = "neutral", meta = "";
+      if (Number.isFinite(t)) {
+        const ok = p.direction === "lower" ? v <= t : v >= t;
+        tone = ok ? "good" : "bad";
+        meta = `<span class="chip ${tone}">${ok ? "▲" : "▼"} Meta ${U.esc(U.fmt(t, d))}${U.esc(p.unit)}</span>`;
+      }
+      return `<div class="kpi">
+        <div class="kpi-value ${tone}">${U.esc(U.fmt(v, d))}<span class="unit">${U.esc(p.unit)}</span></div>
+        <div class="kpi-meta">${meta}<span class="muted">${U.esc(p.note)}</span></div>
+      </div>`;
+    },
+    tick(w) {
+      if (!w.props.simulate) return;
+      const d = U.clamp(Math.round(U.num(w.props.decimals, 1)), 0, 3);
+      const max = String(w.props.unit).trim() === "%" ? 100 : Infinity;
+      w.props.value = +jitter(U.num(w.props.value), 0.004, 0, max).toFixed(d);
+    }
+  },
+
+  line: {
+    label: "Gráfico de linha", icon: "∿", description: "Tendência com linha de meta",
+    defaults: { w: 6, h: 4, title: "Tendência", props: { series: "10,14,12,18,16,21,24", unit: "", target: "", simulate: false } },
+    fields: [
+      { key: "series", label: "Valores (separados por vírgula)", type: "textarea" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "target", label: "Meta (opcional)", type: "number" },
+      { key: "simulate", label: "Simular novos pontos", type: "checkbox" }
+    ],
+    render(w) {
+      const vals = U.list(w.props.series);
+      if (vals.length < 2) return `<div class="empty">Informe ao menos 2 valores.</div>`;
+      const target = U.num(w.props.target, NaN);
+      const all = Number.isFinite(target) ? vals.concat(target) : vals;
+      let min = Math.min(...all), max = Math.max(...all);
+      if (min === max) { min -= 1; max += 1; }
+      const pad = (max - min) * 0.12; min -= pad; max += pad;
+      const W = 300, H = 100;
+      const x = i => (i / (vals.length - 1)) * W;
+      const y = v => H - ((v - min) / (max - min)) * H;
+      const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+      const gid = "g" + w.id.replace(/[^a-z0-9]/gi, "");
+      const last = vals[vals.length - 1], prev = vals[vals.length - 2];
+      const delta = prev ? ((last - prev) / Math.abs(prev)) * 100 : 0;
+      const targetLine = Number.isFinite(target)
+        ? `<line x1="0" x2="${W}" y1="${y(target).toFixed(1)}" y2="${y(target).toFixed(1)}" class="target-line" vector-effect="non-scaling-stroke"/>` : "";
+      return `<div class="chart">
+        <div class="chart-head">
+          <strong>${U.esc(U.fmt(last, 0))}<span class="unit"> ${U.esc(w.props.unit)}</span></strong>
+          <span class="chip ${delta >= 0 ? "good" : "bad"}">${delta >= 0 ? "▲" : "▼"} ${U.esc(U.fmt(Math.abs(delta), 1))}%</span>
+          ${Number.isFinite(target) ? `<span class="muted legend-target">— meta ${U.esc(U.fmt(target, 0))}</span>` : ""}
+        </div>
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="line-svg" role="img" aria-label="${U.esc(w.title)}">
+          <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/>
+          </linearGradient></defs>
+          <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#${gid})"/>
+          ${targetLine}
+          <polyline points="${pts}" class="line-path" vector-effect="non-scaling-stroke"/>
+        </svg>
+      </div>`;
+    },
+    tick(w) {
+      if (!w.props.simulate) return;
+      const vals = U.list(w.props.series);
+      if (vals.length < 2) return;
+      const next = Math.max(0, Math.round(jitter(vals[vals.length - 1], 0.03)));
+      vals.push(next);
+      if (vals.length > 24) vals.shift();
+      w.props.series = vals.join(",");
+    }
+  },
+
+  bar: {
+    label: "Gráfico de barras", icon: "▥", description: "Comparação entre categorias",
+    defaults: { w: 4, h: 3, title: "Comparativo", props: { labels: "A,B,C,D", series: "40,65,30,52", unit: "", simulate: false } },
+    fields: [
+      { key: "labels", label: "Categorias (separadas por vírgula)", type: "textarea" },
+      { key: "series", label: "Valores (separados por vírgula)", type: "textarea" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "simulate", label: "Simular variação", type: "checkbox" }
+    ],
+    render(w) {
+      const labels = U.labels(w.props.labels), vals = U.list(w.props.series);
+      const n = Math.min(labels.length, vals.length);
+      if (!n) return `<div class="empty">Informe categorias e valores.</div>`;
+      const max = Math.max(...vals.slice(0, n).map(Math.abs), 1);
+      let html = `<div class="bars">`;
+      for (let i = 0; i < n; i++) {
+        const pct = (Math.abs(vals[i]) / max) * 100;
+        html += `<div class="bar-row"><span class="bar-label" title="${U.esc(labels[i])}">${U.esc(labels[i])}</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${pct.toFixed(1)}%"></span></span>
+          <span class="bar-val">${U.esc(U.fmt(vals[i], 0))} ${U.esc(w.props.unit)}</span></div>`;
+      }
+      return html + `</div>`;
+    },
+    tick(w) {
+      if (!w.props.simulate) return;
+      w.props.series = U.list(w.props.series).map(v => Math.max(0, Math.round(jitter(v, 0.05)))).join(",");
+    }
+  },
+
+  gauge: {
+    label: "Medidor", icon: "◔", description: "Percentual de capacidade ou utilização",
+    defaults: { w: 3, h: 3, title: "Medidor", props: { value: 60, min: 0, max: 100, unit: "%", target: 80, simulate: false } },
+    fields: [
+      { key: "value", label: "Valor", type: "number" },
+      { key: "min", label: "Mínimo", type: "number" },
+      { key: "max", label: "Máximo", type: "number" },
+      { key: "unit", label: "Unidade", type: "text" },
+      { key: "target", label: "Meta (opcional)", type: "number" },
+      { key: "simulate", label: "Simular variação", type: "checkbox" }
+    ],
+    render(w) {
+      const p = w.props, min = U.num(p.min, 0);
+      let max = U.num(p.max, 100); if (max <= min) max = min + 1;
+      const v = U.num(p.value), pct = U.clamp((v - min) / (max - min), 0, 1);
+      const t = U.num(p.target, NaN);
+      let marker = "";
+      if (Number.isFinite(t)) {
+        const a = Math.PI * (1 - U.clamp((t - min) / (max - min), 0, 1));
+        const x1 = 100 + 66 * Math.cos(a), y1 = 100 - 66 * Math.sin(a);
+        const x2 = 100 + 94 * Math.cos(a), y2 = 100 - 94 * Math.sin(a);
+        marker = `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" class="gauge-target"/>`;
+      }
+      const tone = pct > 0.9 ? "bad" : pct > 0.75 ? "warn" : "good";
+      return `<div class="gauge">
+        <svg viewBox="0 0 200 112" role="img" aria-label="${U.esc(w.title)}: ${U.esc(U.fmt(v, 0))}${U.esc(p.unit)}">
+          <path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="gauge-bg"/>
+          <path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="gauge-fg ${tone}" stroke-dasharray="${(pct * 100).toFixed(1)} 100"/>
+          ${marker}
+        </svg>
+        <div class="gauge-value"><strong>${U.esc(U.fmt(v, 0))}</strong><span>${U.esc(p.unit)}</span></div>
+        ${Number.isFinite(t) ? `<div class="muted gauge-meta">Meta ${U.esc(U.fmt(t, 0))}${U.esc(p.unit)}</div>` : ""}
+      </div>`;
+    },
+    tick(w) {
+      if (!w.props.simulate) return;
+      w.props.value = Math.round(jitter(U.num(w.props.value), 0.02, U.num(w.props.min, 0), U.num(w.props.max, 100)));
+    }
+  },
+
+  alarms: {
+    label: "Alarmes", icon: "⚠", description: "Lista priorizada de eventos",
+    defaults: { w: 4, h: 4, title: "Alarmes", props: { items: "critical|Descrição do alarme|10:00\nwarning|Descrição do alerta|09:30\ninfo|Evento informativo|09:00" } },
+    fields: [
+      { key: "items", label: "Uma linha por alarme: nível|descrição|hora (níveis: critical, warning, info)", type: "textarea", rows: 7 }
+    ],
+    render(w) {
+      const rows = U.lines(w.props.items);
+      if (!rows.length) return `<div class="empty">Nenhum alarme ativo.</div>`;
+      return `<ul class="alarm-list">` + rows.map(r => {
+        const [lvl, text, time] = r.split("|").map(s => (s || "").trim());
+        const L = LEVELS[lvl] || LEVELS.info;
+        return `<li class="alarm lvl-${L.cls}"><span class="sev"></span><span class="alarm-text">${U.esc(text || lvl)}</span>
+          <span class="chip ${L.cls}">${L.label}</span><time>${U.esc(time)}</time></li>`;
+      }).join("") + `</ul>`;
+    }
+  },
+
+  status: {
+    label: "Status de sistemas", icon: "●", description: "Saúde das integrações e sistemas",
+    defaults: { w: 4, h: 3, title: "Status", props: { items: "Sistema A|online\nSistema B|pendente\nSistema C|offline" } },
+    fields: [
+      { key: "items", label: "Uma linha por sistema: nome|status (online, pendente, offline)", type: "textarea", rows: 7 }
+    ],
+    render(w) {
+      const rows = U.lines(w.props.items);
+      if (!rows.length) return `<div class="empty">Nenhum sistema cadastrado.</div>`;
+      const parsed = rows.map(r => { const [n, s] = r.split("|").map(x => (x || "").trim()); return { n, s: STATES[(s || "").toLowerCase()] || STATES.pendente }; });
+      const on = parsed.filter(p => p.s === STATES.online).length;
+      return `<div class="status-sum"><strong>${on}/${parsed.length}</strong> <span class="muted">sistemas online</span></div>
+        <ul class="status-list">` + parsed.map(p =>
+          `<li><span class="dot ${p.s.cls}"></span><span>${U.esc(p.n)}</span><span class="chip ${p.s.cls}">${p.s.label}</span></li>`
+        ).join("") + `</ul>`;
+    }
+  },
+
+  table: {
+    label: "Tabela", icon: "▦", description: "Plano de ação, turnos, ordens",
+    defaults: { w: 6, h: 4, title: "Tabela", props: { rows: "Coluna 1|Coluna 2|Status\nItem|Responsável|Planejado" } },
+    fields: [
+      { key: "rows", label: "Linhas separadas por | (a primeira linha é o cabeçalho)", type: "textarea", rows: 8 }
+    ],
+    render(w) {
+      const rows = U.lines(w.props.rows).map(r => r.split("|").map(c => c.trim()));
+      if (!rows.length) return `<div class="empty">Tabela vazia.</div>`;
+      const [head, ...body] = rows;
+      const tone = c => /conclu|ok|online|instalado/i.test(c) ? "good" : /andamento|pendente|aquisi/i.test(c) ? "warn" : /atras|offline|crít/i.test(c) ? "bad" : "";
+      return `<div class="table-wrap"><table><thead><tr>${head.map(h => `<th>${U.esc(h)}</th>`).join("")}</tr></thead><tbody>` +
+        body.map(r => `<tr>${head.map((_, i) => {
+          const c = r[i] || ""; const t = i === head.length - 1 ? tone(c) : "";
+          return `<td>${t ? `<span class="chip ${t}">${U.esc(c)}</span>` : U.esc(c)}</td>`;
+        }).join("")}</tr>`).join("") + `</tbody></table></div>`;
+    }
+  },
+
+  text: {
+    label: "Texto", icon: "¶", description: "Nota, procedimento ou aviso",
+    defaults: { w: 4, h: 2, title: "Nota", props: { content: "Escreva aqui uma orientação para a operação." } },
+    fields: [{ key: "content", label: "Conteúdo", type: "textarea", rows: 8 }],
+    render(w) {
+      return `<div class="text-body">` + U.lines(w.props.content).map(l => `<p>${U.esc(l)}</p>`).join("") + `</div>`;
+    }
+  },
+
+  clock: {
+    label: "Relógio", icon: "◷", description: "Horário local ou de outro fuso",
+    defaults: { w: 3, h: 2, title: "Relógio", props: { timezone: "America/Sao_Paulo" } },
+    fields: [{ key: "timezone", label: "Fuso horário (IANA)", type: "text" }],
+    render(w) {
+      return `<div class="clock-widget" data-clock="${U.esc(w.props.timezone)}"><strong class="clock-time">--:--:--</strong><span class="muted clock-date"></span></div>`;
+    }
+  },
+
+  camera: {
+    label: "Câmera / CFTV", icon: "◉", description: "Placeholder ou snapshot de câmera",
+    defaults: { w: 3, h: 3, title: "CAM", props: { location: "Local da câmera", url: "" } },
+    fields: [
+      { key: "location", label: "Localização", type: "text" },
+      { key: "url", label: "URL de snapshot (https, opcional)", type: "text" }
+    ],
+    render(w) {
+      const img = U.isHttps(w.props.url) ? `<img src="${U.esc(w.props.url)}" alt="${U.esc(w.title)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="cam-noise"></div><span class="cam-nosignal">Sinal a integrar</span>`;
+      return `<div class="camera">${img}
+        <span class="cam-rec"><i></i>REC</span>
+        <span class="cam-info">${U.esc(w.props.location)}</span>
+        <time class="cam-time" data-clock="America/Sao_Paulo" data-format="cam"></time>
+      </div>`;
+    }
+  },
+
+  embed: {
+    label: "Página externa", icon: "⧉", description: "Incorpora Power BI, Grafana ou outra URL https",
+    defaults: { w: 6, h: 4, title: "Painel externo", props: { url: "" } },
+    fields: [{ key: "url", label: "URL (https)", type: "text" }],
+    render(w) {
+      if (!U.isHttps(w.props.url)) return `<div class="empty">Informe uma URL https publicável (ex.: link de incorporação do Power BI ou Grafana).</div>`;
+      return `<iframe class="embed" src="${U.esc(w.props.url)}" title="${U.esc(w.title)}" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>`;
+    }
+  }
+};
+
+/* ============================================================
+ * Vínculo com fontes de dados (v0.3)
+ * ------------------------------------------------------------
+ * bind.label   : propriedade atualizada pela fonte
+ * bind.accepts : formatos aceitos (exibido no editor)
+ * bind.apply   : converte o valor recebido e atualiza o widget;
+ *                retorna false quando o formato é incompatível
+ * ============================================================ */
+const Bind = {
+  number(v) {
+    if (v && typeof v === "object" && !Array.isArray(v)) v = Bind.pick(v, ["value", "valor", "atual"]);
+    const n = typeof v === "number" ? v : U.num(v, NaN);
+    return Number.isFinite(n) ? n : null;
+  },
+  pick(o, keys) {
+    for (const k of keys) if (o[k] !== undefined && o[k] !== null && o[k] !== "") return o[k];
+    return undefined;
+  },
+  firstString(o) { return Object.values(o).find(x => typeof x === "string"); },
+  firstNumber(o) { return Object.values(o).find(x => typeof x === "number" && Number.isFinite(x)); },
+  clean(v) { return String(v ?? "").replace(/[|\r\n]+/g, " ").trim(); },
+  norm(v) { return String(v ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); },
+  time(v) {
+    if (v === undefined || v === null) return "";
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+      const d = new Date(s);
+      if (!isNaN(d)) return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    }
+    return Bind.clean(s);
+  },
+  level(v) {
+    const s = Bind.norm(v);
+    if (/^(crit|alta|high|alarm|grave|emerg)/.test(s)) return "critical";
+    if (/^(warn|aten|media|medium|alert|aviso)/.test(s)) return "warning";
+    return "info";
+  },
+  state(v) {
+    if (v === true) return "online";
+    if (v === false) return "offline";
+    const s = Bind.norm(v);
+    if (/^(online|ok|up|ativo|conectado|integrado|normal|running)/.test(s)) return "online";
+    if (/^(offline|down|erro|error|falha|fail|inativo|desconectado|parado|stopped)/.test(s)) return "offline";
+    return "pendente";
+  }
+};
+
+WIDGETS.kpi.bind = {
+  label: "Valor", accepts: "número",
+  apply(w, v) { const n = Bind.number(v); if (n === null) return false; w.props.value = n; }
+};
+WIDGETS.gauge.bind = {
+  label: "Valor", accepts: "número",
+  apply(w, v) { const n = Bind.number(v); if (n === null) return false; w.props.value = n; }
+};
+WIDGETS.line.bind = {
+  label: "Série de valores", accepts: "lista de números (substitui a série) ou número (adiciona um ponto)",
+  apply(w, v) {
+    if (v && typeof v === "object" && !Array.isArray(v)) v = Bind.pick(v, ["series", "serie", "valores", "values", "value", "valor"]);
+    if (Array.isArray(v)) {
+      const nums = v.map(x => (typeof x === "object" && x !== null ? Bind.number(x) : U.num(x, NaN))).filter(n => Number.isFinite(n));
+      if (nums.length < 2) return false;
+      w.props.series = nums.slice(-48).join(",");
+      return;
+    }
+    const n = Bind.number(v);
+    if (n === null) return false;
+    const vals = U.list(w.props.series).concat(n).slice(-24);
+    w.props.series = vals.join(",");
+  }
+};
+WIDGETS.bar.bind = {
+  label: "Categorias e valores", accepts: "lista de objetos (rótulo + número), objeto {categoria: número} ou lista de números",
+  apply(w, v) {
+    let labels = [], vals = [];
+    if (Array.isArray(v)) {
+      if (v.every(x => typeof x === "number")) { vals = v; labels = U.labels(w.props.labels); }
+      else v.forEach(x => {
+        if (!x || typeof x !== "object") return;
+        const l = Bind.pick(x, ["label", "rotulo", "nome", "name", "categoria"]) ?? Bind.firstString(x);
+        const n = Bind.pick(x, ["value", "valor"]) ?? Bind.firstNumber(x);
+        if (l !== undefined && Number.isFinite(U.num(n, NaN))) { labels.push(Bind.clean(l).replace(/,/g, " ")); vals.push(U.num(n)); }
+      });
+    } else if (v && typeof v === "object") {
+      Object.entries(v).forEach(([k, n]) => { if (Number.isFinite(U.num(n, NaN))) { labels.push(Bind.clean(k).replace(/,/g, " ")); vals.push(U.num(n)); } });
+    }
+    if (!vals.length) return false;
+    w.props.labels = labels.join(",");
+    w.props.series = vals.join(",");
+  }
+};
+WIDGETS.alarms.bind = {
+  label: "Lista de alarmes", accepts: "lista de objetos {nivel, descricao, hora} ou texto no formato nível|descrição|hora",
+  apply(w, v) {
+    if (typeof v === "string") { w.props.items = v; return; }
+    if (!Array.isArray(v)) return false;
+    w.props.items = v.slice(0, 50).map(a => {
+      if (typeof a === "string") return `info|${Bind.clean(a)}|`;
+      if (!a || typeof a !== "object") return "";
+      const lvl = Bind.level(Bind.pick(a, ["level", "nivel", "severity", "severidade", "prioridade", "priority"]));
+      const text = Bind.clean(Bind.pick(a, ["text", "descricao", "description", "message", "mensagem", "nome"]) ?? Bind.firstString(a));
+      const time = Bind.time(Bind.pick(a, ["time", "hora", "timestamp", "data"]));
+      return `${lvl}|${text}|${time}`;
+    }).filter(Boolean).join("\n");
+  }
+};
+WIDGETS.status.bind = {
+  label: "Lista de sistemas", accepts: "lista de objetos {sistema, status} ou objeto {sistema: status}",
+  apply(w, v) {
+    let rows = [];
+    if (Array.isArray(v)) rows = v.filter(x => x && typeof x === "object").map(x => [
+      Bind.pick(x, ["name", "nome", "sistema", "system", "label"]) ?? Bind.firstString(x),
+      Bind.pick(x, ["status", "estado", "state", "online"])
+    ]);
+    else if (v && typeof v === "object") rows = Object.entries(v);
+    else return false;
+    if (!rows.length) return false;
+    w.props.items = rows.map(([n, s]) => `${Bind.clean(n)}|${Bind.state(s)}`).join("\n");
+  }
+};
+WIDGETS.table.bind = {
+  label: "Linhas da tabela", accepts: "lista de objetos (as chaves viram colunas) ou lista de listas",
+  apply(w, v) {
+    if (typeof v === "string") { w.props.rows = v; return; }
+    if (!Array.isArray(v) || !v.length) return false;
+    let rows;
+    if (Array.isArray(v[0])) rows = v.map(r => r.map(Bind.clean));
+    else if (v[0] && typeof v[0] === "object") {
+      const head = Object.keys(v[0]);
+      rows = [head].concat(v.slice(0, 200).map(r => head.map(k => Bind.clean(r && r[k]))));
+    } else return false;
+    w.props.rows = rows.map(r => r.join("|")).join("\n");
+  }
+};
+WIDGETS.text.bind = {
+  label: "Conteúdo", accepts: "texto ou número",
+  apply(w, v) { if (v === null || typeof v === "object") return false; w.props.content = String(v); }
+};
+
+/* ==========================================================
+   Views — renderização das telas
+   ========================================================== */
+const ARCH_STATUS = { "Integrado": "good", "Em andamento": "warn", "Pendente": "bad" };
+const ASSET_STATUS = { "Instalado": "good", "Em aquisição": "warn", "Planejado": "info" };
+
+const ARCH_COLUMNS = [
+  { key: "layer", label: "Camada", type: "select", options: ["Campo", "Controle", "Supervisão", "Dados", "Negócio", "Visualização"] },
+  { key: "system", label: "Sistema", type: "text" },
+  { key: "vendor", label: "Fornecedor", type: "text" },
+  { key: "protocol", label: "Protocolo / interface", type: "text" },
+  { key: "status", label: "Status", type: "select", options: Object.keys(ARCH_STATUS), tones: ARCH_STATUS }
+];
+const ASSET_COLUMNS = [
+  { key: "item", label: "Item", type: "text" },
+  { key: "qty", label: "Qtd.", type: "number" },
+  { key: "location", label: "Local", type: "text" },
+  { key: "status", label: "Status", type: "select", options: Object.keys(ASSET_STATUS), tones: ASSET_STATUS },
+  { key: "notes", label: "Observações", type: "text" }
+];
+
+const Views = {
+  widget(w, pageId, editing) {
+    const def = WIDGETS[w.type];
+    if (!def) return "";
+    const size = w.w <= 4 ? "s" : w.w <= 8 ? "m" : "l";
+    const tools = editing ? `<div class="w-tools">
+        <button type="button" data-action="w-edit" title="Configurar" aria-label="Configurar widget">⚙</button>
+        <button type="button" data-action="w-dup" title="Duplicar" aria-label="Duplicar widget">⧉</button>
+        <button type="button" data-action="w-del" title="Excluir" aria-label="Excluir widget">✕</button>
+      </div>` : "";
+    return `<article class="widget t-${w.type} size-${size}" data-id="${U.esc(w.id)}" data-page="${U.esc(pageId)}"
+        style="--w:${w.w};--h:${w.h}" ${editing ? 'draggable="true"' : ""}>
+      <header class="w-head">
+        ${editing ? '<span class="drag-handle" aria-hidden="true">⠿</span>' : ""}
+        <h3>${U.esc(w.title)}</h3>
+        ${w.binding && w.binding.source ? '<span class="w-src wait" title="Aguardando dados"><span class="t">Aguardando</span></span>' : ""}${tools}
+      </header>
+      <div class="w-body">${def.render(w)}</div>
+      ${editing ? '<span class="resize-handle" data-action="w-resize" title="Arraste para redimensionar"></span>' : ""}
+    </article>`;
+  },
+
+  grid(page, editing) {
+    return `<div class="grid" data-grid="${U.esc(page.id)}">${page.widgets.map(w => Views.widget(w, page.id, editing)).join("")}</div>`;
+  },
+
+  dashboard(state, ui) {
+    const page = state.pages.find(p => p.id === state.activePage) || state.pages[0];
+    const tabs = state.pages.map(p =>
+      `<button type="button" class="tab ${p.id === page.id ? "active" : ""}" data-action="page-go" data-page="${U.esc(p.id)}">${U.esc(p.name)}</button>`
+    ).join("");
+    const editbar = ui.editing ? `<div class="editbar">
+        <button type="button" class="btn primary" data-action="lib-open">＋ Adicionar widget</button>
+        <button type="button" class="btn" data-action="page-add">＋ Nova página</button>
+        <button type="button" class="btn" data-action="page-rename">Renomear página</button>
+        <button type="button" class="btn danger" data-action="page-del" ${state.pages.length < 2 ? "disabled" : ""}>Excluir página</button>
+        <span class="hint">Arraste os cards para reordenar e use o canto inferior direito para redimensionar.</span>
+      </div>` : "";
+    const body = page.widgets.length ? Views.grid(page, ui.editing) : `<div class="empty-page">
+        <strong>Esta página ainda não possui widgets.</strong>
+        <p class="muted">Ative o modo de edição e adicione KPIs, gráficos, alarmes, câmeras ou painéis externos.</p>
+        <button type="button" class="btn primary" data-action="${ui.editing ? "lib-open" : "edit-on"}">${ui.editing ? "＋ Adicionar widget" : "✎ Editar COI"}</button>
+      </div>`;
+    return `<div class="tabs" role="tablist">${tabs}</div>${editbar}${body}`;
+  },
+
+  sourceName(state, source) {
+    const [kind, a, b] = String(source || "").split(":");
+    const page = state.pages.find(p => p.id === a);
+    if (kind === "page" && page) return "Página · " + page.name;
+    if (kind === "widget" && page) { const w = page.widgets.find(x => x.id === b); if (w) return w.title; }
+    return "Sem sinal";
+  },
+
+  tileContent(state, source) {
+    const [kind, a, b] = String(source || "").split(":");
+    const page = state.pages.find(p => p.id === a);
+    if (kind === "page" && page) return `<div class="stage stage-page">${Views.grid(page, false)}</div>`;
+    if (kind === "widget" && page) {
+      const w = page.widgets.find(x => x.id === b);
+      if (w) return `<div class="stage stage-widget">${Views.widget(w, page.id, false)}</div>`;
+    }
+    return `<div class="no-signal"><span>SEM SINAL</span></div>`;
+  },
+
+  videowall(state, ui) {
+    const vw = state.videowall, total = vw.rows * vw.cols;
+    const opts = (sel) => {
+      let html = `<option value="none" ${sel === "none" ? "selected" : ""}>Sem sinal</option><optgroup label="Páginas completas">`;
+      html += state.pages.map(p => `<option value="page:${U.esc(p.id)}" ${sel === "page:" + p.id ? "selected" : ""}>${U.esc(p.name)}</option>`).join("") + `</optgroup>`;
+      state.pages.forEach(p => {
+        if (!p.widgets.length) return;
+        html += `<optgroup label="Widgets · ${U.esc(p.name)}">` + p.widgets.map(w => {
+          const v = `widget:${p.id}:${w.id}`;
+          return `<option value="${U.esc(v)}" ${sel === v ? "selected" : ""}>${U.esc(w.title)}</option>`;
+        }).join("") + `</optgroup>`;
+      });
+      return html;
+    };
+    const num = (n, max, key) => Array.from({ length: max }, (_, i) =>
+      `<option value="${i + 1}" ${n === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("");
+    let tiles = "";
+    for (let i = 0; i < total; i++) {
+      const src = (vw.tiles[i] || {}).source || "none";
+      tiles += `<div class="tile">
+        ${vw.labels ? `<div class="tile-label"><b>TV ${String(i + 1).padStart(2, "0")}</b> ${U.esc(Views.sourceName(state, src))}</div>` : ""}
+        <div class="tile-screen">${Views.tileContent(state, src)}</div>
+        <label class="tile-select"><span class="sr-only">Fonte da TV ${i + 1}</span>
+          <select data-action="tile-src" data-index="${i}">${opts(src)}</select></label>
+      </div>`;
+    }
+    return `<section class="card wall-controls">
+        <div class="field-inline"><label>Linhas <select data-action="wall-rows">${num(vw.rows, 4)}</select></label>
+        <label>Colunas <select data-action="wall-cols">${num(vw.cols, 6)}</select></label>
+        <label class="check"><input type="checkbox" data-action="wall-labels" ${vw.labels ? "checked" : ""}> Identificar telas</label></div>
+        <div class="wall-meta muted">${total} telas · proporção 16:9 por tela</div>
+        <button type="button" class="btn primary" data-action="wall-tv">▶ Modo TV</button>
+      </section>
+      <section class="wall-frame"><div class="wall ${vw.labels ? "labeled" : ""}" id="wall" style="--cols:${vw.cols};--rows:${vw.rows}">${tiles}</div></section>`;
+  },
+
+  editableTable(coll, rows, cols, editing) {
+    const head = cols.map(c => `<th>${U.esc(c.label)}</th>`).join("") + (editing ? "<th></th>" : "");
+    const body = rows.map((r, i) => `<tr>${cols.map(c => {
+      const v = r[c.key] ?? "";
+      if (!editing) {
+        if (c.tones) return `<td><span class="chip ${c.tones[v] || ""}">${U.esc(v)}</span></td>`;
+        return `<td>${U.esc(v)}</td>`;
+      }
+      const attrs = `data-action="cell" data-coll="${coll}" data-row="${i}" data-key="${c.key}" aria-label="${U.esc(c.label)}"`;
+      if (c.type === "select") {
+        const options = c.options.includes(v) ? c.options : [v, ...c.options];
+        return `<td><select ${attrs}>${options.map(o => `<option ${o === v ? "selected" : ""}>${U.esc(o)}</option>`).join("")}</select></td>`;
+      }
+      return `<td><input ${attrs} type="${c.type === "number" ? "number" : "text"}" ${c.type === "number" ? 'min="0"' : ""} value="${U.esc(v)}"></td>`;
+    }).join("")}${editing ? `<td><button type="button" class="icon-btn sm" data-action="row-del" data-coll="${coll}" data-row="${i}" aria-label="Excluir linha">✕</button></td>` : ""}</tr>`).join("");
+    return `<div class="table-wrap card"><table class="data-table"><thead><tr>${head}</tr></thead><tbody>${body ||
+      `<tr><td colspan="${cols.length + 1}" class="muted">Nenhum registro.</td></tr>`}</tbody></table>
+      ${editing ? `<div class="table-foot"><button type="button" class="btn" data-action="row-add" data-coll="${coll}">＋ Adicionar linha</button></div>` :
+      `<div class="table-foot muted">Ative “Editar COI” para alterar esta tabela.</div>`}</div>`;
+  },
+
+  summary(items) {
+    return `<div class="summary">${items.map(i =>
+      `<div class="card stat"><span class="muted">${U.esc(i.label)}</span><strong class="${i.tone || ""}">${U.esc(i.value)}</strong></div>`).join("")}</div>`;
+  },
+
+  arquitetura(state, ui) {
+    const rows = state.architecture;
+    const count = s => rows.filter(r => r.status === s).length;
+    const layers = ARCH_COLUMNS[0].options.filter(l => rows.some(r => r.layer === l))
+      .concat([...new Set(rows.map(r => r.layer))].filter(l => !ARCH_COLUMNS[0].options.includes(l)));
+    const diagram = layers.map(l => `<div class="layer"><span class="layer-name">${U.esc(l)}</span><div class="layer-items">${
+      rows.filter(r => r.layer === l).map(r => `<span class="node ${ARCH_STATUS[r.status] || ""}" title="${U.esc(r.protocol)}">${U.esc(r.system)}</span>`).join("")}</div></div>`).join("");
+    return Views.summary([
+      { label: "Sistemas mapeados", value: rows.length },
+      { label: "Integrados", value: count("Integrado"), tone: "good" },
+      { label: "Em andamento", value: count("Em andamento"), tone: "warn" },
+      { label: "Pendentes", value: count("Pendente"), tone: "bad" }
+    ]) + `<section class="card"><div class="section-head"><h2>Mapa de integração por camada</h2>
+        <span class="legend"><i class="dot good"></i>Integrado <i class="dot warn"></i>Em andamento <i class="dot bad"></i>Pendente</span></div>
+        <div class="layers">${diagram || '<p class="muted">Nenhum sistema cadastrado.</p>'}</div></section>
+      <h2 class="block-title">Inventário de sistemas</h2>` + Views.editableTable("architecture", rows, ARCH_COLUMNS, ui.editing);
+  },
+
+  infraestrutura(state, ui) {
+    const rows = state.assets;
+    const qty = rows.reduce((s, r) => s + Math.max(0, U.num(r.qty)), 0);
+    const inst = rows.filter(r => r.status === "Instalado").length;
+    return Views.summary([
+      { label: "Itens cadastrados", value: rows.length },
+      { label: "Quantidade total", value: qty },
+      { label: "Instalados", value: inst, tone: "good" },
+      { label: "A instalar", value: rows.length - inst, tone: "warn" }
+    ]) + `<h2 class="block-title">Infraestrutura física do COI</h2>` + Views.editableTable("assets", rows, ASSET_COLUMNS, ui.editing);
+  },
+
+  boundWidgets(state, sourceId) {
+    const out = [];
+    state.pages.forEach(p => p.widgets.forEach(w => {
+      if (w.binding && w.binding.source === sourceId) out.push({ page: p, widget: w });
+    }));
+    return out;
+  },
+
+  srcState(s) {
+    const r = DataHub.status(s.id);
+    if (!s.enabled || r.status === "disabled") return { cls: "muted", label: "Desativada" };
+    if (r.status === "paused") return { cls: "muted", label: "Pausada" };
+    if (DataHub.fresh(s)) return { cls: "good", label: "Online" };
+    if (r.status === "error") return { cls: "bad", label: "Erro" };
+    if (r.lastOk) return { cls: "warn", label: "Sem atualização" };
+    return { cls: "info", label: "Conectando" };
+  },
+
+  srcSummary(state) {
+    const srcs = state.sources;
+    const states = srcs.map(s => Views.srcState(s).cls);
+    const bound = state.pages.reduce((n, p) => n + p.widgets.filter(w => w.binding && w.binding.source).length, 0);
+    return Views.summary([
+      { label: "Fontes cadastradas", value: srcs.length },
+      { label: "Online", value: states.filter(c => c === "good").length, tone: "good" },
+      { label: "Com erro ou sem atualização", value: states.filter(c => c === "bad" || c === "warn").length, tone: "bad" },
+      { label: "Widgets vinculados", value: bound }
+    ]);
+  },
+
+  srcLive(s) {
+    const r = DataHub.status(s.id), st = Views.srcState(s);
+    const last = r.lastOk ? "há " + U.ago(Date.now() - r.lastOk) : "—";
+    return `<div class="src-status"><span class="chip ${st.cls}"><i class="dot ${st.cls}"></i>${st.label}</span></div>
+      <dl class="src-meta">
+        <div><dt>Última atualização</dt><dd>${U.esc(last)}</dd></div>
+        <div><dt>Leituras</dt><dd>${U.esc(U.fmt(r.count, 0))}</dd></div>
+        <div><dt>Latência</dt><dd>${r.latency === null ? "—" : U.esc(r.latency) + " ms"}</dd></div>
+        <div><dt>Considera desatualizado após</dt><dd>${U.esc(U.ago(DataHub.staleMs(s)))}</dd></div>
+      </dl>
+      ${r.lastError ? `<p class="src-error">${U.esc(r.lastError)}</p>` : ""}`;
+  },
+
+  dados(state) {
+    const cards = state.sources.map(s => {
+      const T = DataHub.TYPES[s.type];
+      const bound = Views.boundWidgets(state, s.id);
+      const where = s.type === "simulated" ? "Gerado no navegador" : s.url;
+      return `<article class="card src-card" data-src="${U.esc(s.id)}">
+        <div class="src-top">
+          <span class="lib-ico" aria-hidden="true">${T.icon}</span>
+          <div class="src-name"><strong>${U.esc(s.name)}</strong><small title="${U.esc(where)}">${U.esc(T.label)} · ${U.esc(where)}</small></div>
+          <label class="switch" title="Ativar ou desativar a fonte">
+            <input type="checkbox" data-action="src-toggle" data-src="${U.esc(s.id)}" ${s.enabled ? "checked" : ""}>
+            <span class="sr-only">Fonte ativa</span><span class="switch-ui" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="src-live" data-live="${U.esc(s.id)}">${Views.srcLive(s)}</div>
+        <div class="src-bound">
+          <span class="muted">${bound.length} widget${bound.length === 1 ? "" : "s"} vinculado${bound.length === 1 ? "" : "s"}</span>
+          ${bound.slice(0, 6).map(b => `<span class="chip">${U.esc(b.widget.title)}</span>`).join("")}
+          ${bound.length > 6 ? `<span class="chip">+${bound.length - 6}</span>` : ""}
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" data-action="src-view" data-src="${U.esc(s.id)}">Ver dados</button>
+          <button type="button" class="btn" data-action="src-test" data-src="${U.esc(s.id)}">Testar</button>
+          <button type="button" class="btn" data-action="src-edit" data-src="${U.esc(s.id)}">Editar</button>
+          <button type="button" class="btn danger" data-action="src-del" data-src="${U.esc(s.id)}">Excluir</button>
+        </div>
+      </article>`;
+    }).join("");
+    return `<div id="srcSummary">${Views.srcSummary(state)}</div>
+      <div class="section-head block-head"><h2>Fontes cadastradas</h2>
+        <button type="button" class="btn primary" data-action="src-add">＋ Nova fonte</button></div>
+      ${cards ? `<div class="src-grid">${cards}</div>` : `<div class="empty-page"><strong>Nenhuma fonte cadastrada.</strong>
+        <p class="muted">Cadastre uma API REST, um WebSocket ou o simulador para alimentar os widgets.</p>
+        <button type="button" class="btn primary" data-action="src-add">＋ Nova fonte</button></div>`}
+      <section class="card how">
+        <h2>Como vincular um widget</h2>
+        <ol>
+          <li>Cadastre a fonte e use <strong>Ver dados</strong> para conferir os caminhos disponíveis no JSON.</li>
+          <li>Ative <strong>Editar COI</strong>, abra a configuração (⚙) do widget e escolha a fonte e o caminho (ex.: <code>operacao.disponibilidade</code>).</li>
+          <li>O widget passa a exibir <span class="w-src good static"><span class="t">Ao vivo</span></span> ou <span class="w-src warn static"><span class="t">Desatualizado</span></span> conforme o tempo desde a última leitura.</li>
+        </ol>
+        <p class="muted">Para testar localmente com REST e WebSocket: <code>node coi-tools.mjs servidor</code>. Detalhes na seção <strong>Integração</strong> do README.</p>
+      </section>`;
+  },
+
+  configuracoes(state) {
+    const s = state.settings;
+    return `<div class="settings">
+      <section class="card"><h2>Identidade</h2>
+        <label class="field">Nome da plataforma<input type="text" data-setting="name" maxlength="40" value="${U.esc(s.name)}"></label>
+        <label class="field">Subtítulo<input type="text" data-setting="subtitle" maxlength="60" value="${U.esc(s.subtitle)}"></label>
+        <label class="field">Cor de destaque<input type="color" data-setting="accent" value="${U.esc(s.accent)}"></label>
+        <label class="field">Tema<select data-setting="theme">
+          ${[["dark", "Escuro"], ["light", "Claro"], ["auto", "Automático (sistema)"]].map(([v, l]) => `<option value="${v}" ${s.theme === v ? "selected" : ""}>${l}</option>`).join("")}
+        </select></label>
+      </section>
+      <section class="card"><h2>Dados</h2>
+        <label class="check"><input type="checkbox" data-setting="simulate" ${s.simulate ? "checked" : ""}> Simular dados em tempo real</label>
+        <label class="field">Intervalo de atualização (segundos)<input type="number" min="2" max="60" data-setting="refresh" value="${U.esc(s.refresh)}"></label>
+        <p class="muted">Pausar a simulação interrompe os widgets com “Simular” ativo e as fontes do tipo Simulador. Fontes REST e WebSocket continuam ativas — gerencie-as em <strong>Fontes de dados</strong>.</p>
+      </section>
+      <section class="card"><h2>Configuração</h2>
+        <p class="muted">Todas as alterações ficam salvas neste navegador. Exporte o JSON para versionar no repositório ou compartilhar com a equipe.</p>
+        <div class="btn-row">
+          <button type="button" class="btn primary" data-action="export">⇩ Exportar JSON</button>
+          <button type="button" class="btn" data-action="import">⇧ Importar JSON</button>
+          <button type="button" class="btn danger" data-action="reset">Restaurar padrão</button>
+        </div>
+      </section>
+    </div>`;
+  }
+};
+
+/* ==========================================================
+   App — estado, eventos, editor, videowall e dados ao vivo
+   ========================================================== */
+(() => {
+  "use strict";
+
+  const $ = (s, root = document) => root.querySelector(s);
+  const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+
+  let state = Store.load();
+  const ui = { view: "dashboard", editing: false, drawer: null };
+  let simTimer = null, dragId = null, saveTimer = null;
+
+  const VIEW_META = {
+    dashboard:      { title: () => currentPage().name, sub: "Monitoramento operacional consolidado" },
+    videowall:      { title: () => "Videowall", sub: "Distribuição de conteúdos por tela" },
+    dados:          { title: () => "Fontes de dados", sub: "Conectores REST, WebSocket e simulador, com status de atualização" },
+    arquitetura:    { title: () => "Arquitetura de integração", sub: "Sistemas, camadas, protocolos e status" },
+    infraestrutura: { title: () => "Infraestrutura", sub: "Equipamentos e ativos físicos do COI" },
+    configuracoes:  { title: () => "Configurações", sub: "Identidade, dados e versionamento da configuração" }
+  };
+
+  /* ---------- helpers ---------- */
+  function currentPage() {
+    return state.pages.find(p => p.id === state.activePage) || state.pages[0];
+  }
+  function findWidget(pageId, id) {
+    const page = state.pages.find(p => p.id === pageId);
+    return page ? { page, widget: page.widgets.find(w => w.id === id), index: page.widgets.findIndex(w => w.id === id) } : {};
+  }
+  function save(immediate) {
+    clearTimeout(saveTimer);
+    if (immediate) Store.save(state);
+    else saveTimer = setTimeout(() => Store.save(state), 250);
+  }
+  function toast(msg, tone = "") {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.className = "toast show " + tone;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => (t.className = "toast"), 2600);
+  }
+  function slug(text) {
+    return String(text).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "pagina";
+  }
+
+  /* ---------- dados ao vivo (v0.3) ---------- */
+  const live = new Map();
+  const liveKey = (pageId, id) => pageId + "::" + id;
+
+  function applyToWidget(pageId, w, payload) {
+    const def = WIDGETS[w.type];
+    const key = liveKey(pageId, w.id);
+    if (!def || !def.bind || payload === undefined) return false;
+    const value = DataHub.resolve(payload, w.binding.path);
+    const prev = live.get(key) || {};
+    if (value === undefined) { live.set(key, { at: prev.at, error: "Caminho não encontrado" }); return false; }
+    let ok = false;
+    try { ok = def.bind.apply(w, value) !== false; } catch (e) { ok = false; }
+    live.set(key, ok ? { at: Date.now() } : { at: prev.at, error: "Formato incompatível" });
+    return ok;
+  }
+
+  function refreshBodies(pageId, w) {
+    const def = WIDGETS[w.type];
+    $$(`.widget[data-page="${CSS.escape(pageId)}"][data-id="${CSS.escape(w.id)}"] .w-body`)
+      .forEach(body => (body.innerHTML = def.render(w)));
+  }
+
+  function onSourceData(sourceId) {
+    const payload = DataHub.payload(sourceId);
+    state.pages.forEach(page => page.widgets.forEach(w => {
+      if (!w.binding || w.binding.source !== sourceId) return;
+      if (applyToWidget(page.id, w, payload)) refreshBodies(page.id, w);
+    }));
+  }
+
+  const el_w = w => w.w <= 4;
+
+  function widgetLive(pageId, w) {
+    const src = state.sources.find(s => s.id === w.binding.source);
+    if (!src) return { cls: "bad", text: "Fonte removida", title: "A fonte vinculada não existe mais" };
+    if (!src.enabled) return { cls: "muted", text: "Fonte desativada", title: src.name };
+    const l = live.get(liveKey(pageId, w.id));
+    const r = DataHub.status(src.id);
+    if (l && l.error) return { cls: "bad", text: l.error, title: `${src.name} · caminho “${w.binding.path || "(raiz)"}”` };
+    if (!l || !l.at) {
+      if (r.status === "error") return { cls: "bad", text: "Sem conexão", title: `${src.name}: ${r.lastError}` };
+      if (r.status === "paused") return { cls: "muted", text: "Pausada", title: `${src.name} pausada` };
+      return { cls: "wait", text: "Aguardando", title: `Aguardando a primeira leitura de ${src.name}` };
+    }
+    const age = Date.now() - l.at;
+    const title = `${src.name} · atualizado há ${U.ago(age)}${r.lastError ? " · " + r.lastError : ""}`;
+    if (age > DataHub.staleMs(src)) return { cls: "warn", text: el_w(w) ? "Desatualizado" : "Desatualizado há " + U.ago(age), title: "Desatualizado · " + title, stale: true };
+    return { cls: "good", text: "Ao vivo", title };
+  }
+
+  function updateLive() {
+    $$(".widget .w-src").forEach(badge => {
+      const el = badge.closest(".widget");
+      const { widget: w } = findWidget(el.dataset.page, el.dataset.id);
+      if (!w || !w.binding) return;
+      const st = widgetLive(el.dataset.page, w);
+      badge.className = "w-src " + st.cls;
+      badge.title = st.title;
+      badge.firstElementChild.textContent = st.text;
+      el.classList.toggle("is-stale", !!st.stale);
+    });
+    updateSourcePill();
+    if (ui.view === "dados") {
+      const sum = $("#srcSummary");
+      if (sum) sum.innerHTML = Views.srcSummary(state);
+      $$("[data-live]").forEach(box => {
+        const src = state.sources.find(s => s.id === box.dataset.live);
+        if (src) box.innerHTML = Views.srcLive(src);
+      });
+    }
+  }
+
+  function updateSourcePill() {
+    const pill = $("#srcPill");
+    const active = state.sources.filter(s => s.enabled);
+    const ok = active.filter(s => DataHub.fresh(s)).length;
+    const cls = !active.length ? "muted" : ok === active.length ? "good" : ok ? "warn" : "bad";
+    pill.querySelector(".dot").className = "dot " + cls;
+    pill.querySelector(".t").textContent = active.length ? `${ok}/${active.length} fontes online` : "Sem fontes ativas";
+    pill.title = active.length ? `${ok} de ${active.length} fontes ativas com dados atualizados` : "Nenhuma fonte de dados ativa";
+  }
+
+  /* ---------- tema e identidade ---------- */
+  function applyTheme() {
+    const s = state.settings;
+    const theme = s.theme === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : s.theme;
+    document.documentElement.dataset.theme = theme;
+    if (/^#[0-9a-f]{6}$/i.test(s.accent)) document.documentElement.style.setProperty("--accent", s.accent);
+    $("#brandName").textContent = s.name || "COI Forge";
+    $("#brandSub").textContent = s.subtitle || "";
+    document.title = (s.name || "COI Forge") + " · " + VIEW_META[ui.view].title();
+    $("#liveToggle").setAttribute("aria-pressed", String(!!s.simulate));
+    $("#liveToggle").classList.toggle("off", !s.simulate);
+    $("#liveLabel").textContent = s.simulate ? "Simulação ativa" : "Simulação pausada";
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    applyTheme();
+    document.body.classList.toggle("editing", ui.editing);
+    $("#editBtn").textContent = ui.editing ? "✓ Concluir edição" : "✎ Editar COI";
+    $("#editBtn").setAttribute("aria-pressed", String(ui.editing));
+    $$("#nav [data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === ui.view));
+    $("#pageList").innerHTML = state.pages.map(p =>
+      `<button type="button" data-action="page-go" data-page="${U.esc(p.id)}" class="${ui.view === "dashboard" && p.id === state.activePage ? "active" : ""}">
+        <span class="ico">›</span>${U.esc(p.name)}<small>${p.widgets.length}</small></button>`).join("");
+    const meta = VIEW_META[ui.view];
+    $("#viewTitle").textContent = meta.title();
+    $("#viewSub").textContent = meta.sub;
+    $("#view").innerHTML = Views[ui.view](state, ui);
+    $("#view").dataset.view = ui.view;
+    updateClocks();
+    updateLive();
+    if (ui.view === "videowall") requestAnimationFrame(fitStages);
+  }
+
+  function rerenderWidget(pageId, id) {
+    const { widget } = findWidget(pageId, id);
+    if (!widget) return;
+    $$(`.widget[data-page="${CSS.escape(pageId)}"][data-id="${CSS.escape(id)}"]`).forEach(el => {
+      el.outerHTML = Views.widget(widget, pageId, ui.editing && !el.closest(".stage"));
+    });
+    updateClocks();
+    updateLive();
+  }
+
+  /* ---------- videowall: escala das telas ---------- */
+  function fitStages() {
+    $$(".tile-screen").forEach(screen => {
+      const stage = screen.querySelector(".stage");
+      if (!stage) return;
+      stage.style.transform = "none";
+      const sw = stage.offsetWidth, sh = stage.offsetHeight;
+      if (!sw || !sh) return;
+      const s = Math.min(screen.clientWidth / sw, screen.clientHeight / sh);
+      const x = (screen.clientWidth - sw * s) / 2, y = (screen.clientHeight - sh * s) / 2;
+      stage.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+    });
+  }
+  let fitFrame = 0;
+  new ResizeObserver(() => {
+    if (ui.view !== "videowall") return;
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitStages);
+  }).observe($("#view"));
+
+  /* ---------- relógios ---------- */
+  function fmtTime(tz, opts) {
+    try { return new Intl.DateTimeFormat("pt-BR", Object.assign({ timeZone: tz || undefined }, opts)).format(new Date()); }
+    catch (e) { return new Intl.DateTimeFormat("pt-BR", opts).format(new Date()); }
+  }
+  function updateClocks() {
+    $("#clock").textContent = fmtTime(null, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    $$("[data-clock]").forEach(el => {
+      const tz = el.dataset.clock;
+      if (el.dataset.format === "cam") {
+        el.textContent = fmtTime(tz, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        return;
+      }
+      const t = el.querySelector(".clock-time"), d = el.querySelector(".clock-date");
+      if (t) t.textContent = fmtTime(tz, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      if (d) d.textContent = fmtTime(tz, { weekday: "long", day: "2-digit", month: "long" }) + " · " + (tz || "");
+    });
+  }
+  setInterval(() => { updateClocks(); updateLive(); }, 1000);
+
+  /* ---------- simulação ---------- */
+  function tick() {
+    if (!state.settings.simulate || ui.editing || document.hidden) return;
+    state.pages.forEach(page => page.widgets.forEach(w => {
+      const def = WIDGETS[w.type];
+      if (!def || !def.tick || (w.binding && w.binding.source)) return;
+      const before = JSON.stringify(w.props);
+      def.tick(w);
+      if (JSON.stringify(w.props) === before) return;
+      $$(`.widget[data-page="${CSS.escape(page.id)}"][data-id="${CSS.escape(w.id)}"] .w-body`)
+        .forEach(body => (body.innerHTML = def.render(w)));
+    }));
+  }
+  function restartSimulation(resetLive) {
+    if (resetLive) live.clear();
+    DataHub.configure(state.sources, { simulate: !!state.settings.simulate });
+    clearInterval(simTimer);
+    const sec = U.clamp(Math.round(U.num(state.settings.refresh, 5)), 2, 60);
+    simTimer = setInterval(tick, sec * 1000);
+  }
+
+  /* ---------- drawer ---------- */
+  function openDrawer(html, mode) {
+    const d = $("#drawer");
+    d.innerHTML = html;
+    d.classList.add("open");
+    d.setAttribute("aria-hidden", "false");
+    $("#scrim").hidden = false;
+    ui.drawer = mode;
+    const first = d.querySelector("input, select, textarea, button.lib-item");
+    if (first) first.focus();
+  }
+  function closeDrawer() {
+    $("#drawer").classList.remove("open");
+    $("#drawer").setAttribute("aria-hidden", "true");
+    $("#scrim").hidden = true;
+    $("#sidebar").classList.remove("open");
+    ui.drawer = null;
+  }
+
+  function openLibrary() {
+    const items = Object.entries(WIDGETS).map(([type, d]) =>
+      `<button type="button" class="lib-item" data-action="lib-add" data-type="${type}">
+        <span class="lib-ico">${d.icon}</span><span><strong>${U.esc(d.label)}</strong><small>${U.esc(d.description)}</small></span>
+      </button>`).join("");
+    openDrawer(`<div class="drawer-head"><div><strong>Biblioteca de widgets</strong><small>Adicionar à página “${U.esc(currentPage().name)}”</small></div>
+      <button type="button" class="icon-btn" data-action="drawer-close" aria-label="Fechar">✕</button></div>
+      <div class="lib">${items}</div>`, "library");
+  }
+
+  function fieldHTML(f, value, attr) {
+    const id = "f-" + f.key + "-" + Math.random().toString(36).slice(2, 6);
+    if (f.type === "checkbox") return `<label class="check"><input type="checkbox" ${attr} ${value ? "checked" : ""}> ${U.esc(f.label)}</label>`;
+    let input;
+    if (f.type === "textarea") input = `<textarea id="${id}" rows="${f.rows || 4}" ${attr}>${U.esc(value)}</textarea>`;
+    else if (f.type === "select") input = `<select id="${id}" ${attr}>${f.options.map(([v, l]) => `<option value="${U.esc(v)}" ${String(value) === v ? "selected" : ""}>${U.esc(l)}</option>`).join("")}</select>`;
+    else input = `<input id="${id}" type="${f.type === "number" ? "number" : "text"}" step="any" ${f.min != null ? `min="${f.min}"` : ""} ${f.max != null ? `max="${f.max}"` : ""} value="${U.esc(value)}" ${attr}>`;
+    return `<div class="field"><label for="${id}">${U.esc(f.label)}</label>${input}</div>`;
+  }
+
+  function pathOptions(sourceId) {
+    const payload = sourceId ? DataHub.payload(sourceId) : undefined;
+    return payload === undefined ? "" : DataHub.paths(payload).map(p => `<option value="${U.esc(p)}"></option>`).join("");
+  }
+
+  function bindPreview(pageId, w) {
+    if (!w.binding || !w.binding.source) return `<span class="muted">Sem vínculo: os valores das propriedades abaixo são exibidos diretamente.</span>`;
+    const payload = DataHub.payload(w.binding.source);
+    if (payload === undefined) return `<span class="muted">Aguardando a primeira leitura desta fonte.</span>`;
+    const v = DataHub.resolve(payload, w.binding.path);
+    if (v === undefined) return `<span class="bad">Caminho não encontrado na última leitura.</span>`;
+    let txt = JSON.stringify(v);
+    if (txt && txt.length > 160) txt = txt.slice(0, 160) + "…";
+    const l = live.get(liveKey(pageId, w.id));
+    const err = l && l.error ? ` <span class="bad">· ${U.esc(l.error)}</span>` : "";
+    return `Valor atual: <code>${U.esc(txt)}</code>${err}<br><span class="muted">As propriedades correspondentes são substituídas pela fonte a cada leitura.</span>`;
+  }
+
+  function openEditor(pageId, id) {
+    const { widget: w } = findWidget(pageId, id);
+    if (!w) return;
+    const def = WIDGETS[w.type];
+    const base = `
+      ${fieldHTML({ key: "title", label: "Título", type: "text" }, w.title, 'data-wfield="title" maxlength="60"')}
+      <div class="field-row">
+        <div class="field"><label>Largura <output id="outW">${w.w}</output>/12</label><input type="range" min="1" max="12" value="${w.w}" data-wfield="w"></div>
+        <div class="field"><label>Altura <output id="outH">${w.h}</output></label><input type="range" min="1" max="8" value="${w.h}" data-wfield="h"></div>
+      </div>`;
+    const props = def.fields.map(f => fieldHTML(f, w.props[f.key], `data-wprop="${f.key}" data-type="${f.type}"`)).join("");
+    const b = w.binding || {};
+    const bind = def.bind ? `<hr><div class="group-title">Fonte de dados</div>
+      <div class="field"><label for="bSrc">Fonte</label><select id="bSrc" data-bind="source">
+        <option value="">Nenhuma — valores manuais${def.tick ? " ou simulados" : ""}</option>
+        ${state.sources.map(s => `<option value="${U.esc(s.id)}" ${b.source === s.id ? "selected" : ""}>${U.esc(s.name)}${s.enabled ? "" : " (desativada)"}</option>`).join("")}
+      </select></div>
+      <div class="field" id="bPathWrap" ${b.source ? "" : "hidden"}><label for="bPath">Caminho no JSON</label>
+        <input id="bPath" type="text" data-bind="path" list="bPaths" autocomplete="off" placeholder="ex.: operacao.disponibilidade" value="${U.esc(b.path || "")}">
+        <datalist id="bPaths">${pathOptions(b.source)}</datalist>
+        <small class="muted hint-text">Atualiza: <strong>${U.esc(def.bind.label)}</strong>. Aceita ${U.esc(def.bind.accepts)}.</small>
+      </div>
+      <div class="bind-preview" id="bPreview">${bindPreview(pageId, w)}</div>` : "";
+    openDrawer(`<div class="drawer-head"><div><strong>Configurar widget</strong><small>${def.icon} ${U.esc(def.label)}</small></div>
+        <button type="button" class="icon-btn" data-action="drawer-close" aria-label="Fechar">✕</button></div>
+      <form class="drawer-form" data-page="${U.esc(pageId)}" data-id="${U.esc(id)}" novalidate>${base}${bind}<hr><div class="group-title">Propriedades</div>${props}</form>
+      <div class="drawer-foot">
+        <button type="button" class="btn danger" data-action="w-del" data-page="${U.esc(pageId)}" data-id="${U.esc(id)}">Excluir</button>
+        <button type="button" class="btn primary" data-action="drawer-close">Concluir</button>
+      </div>`, "editor");
+  }
+
+  function onEditorInput(target) {
+    const form = target.closest(".drawer-form");
+    if (!form) return;
+    const { widget: w } = findWidget(form.dataset.page, form.dataset.id);
+    if (!w) return;
+    if (target.dataset.bind) {
+      const src = $("#bSrc").value, path = $("#bPath").value.trim().slice(0, 200);
+      const key = liveKey(form.dataset.page, w.id);
+      live.delete(key);
+      if (src) w.binding = { source: src, path }; else delete w.binding;
+      $("#bPathWrap").hidden = !src;
+      if (target.dataset.bind === "source") $("#bPaths").innerHTML = pathOptions(src);
+      if (src) applyToWidget(form.dataset.page, w, DataHub.payload(src));
+      $("#bPreview").innerHTML = bindPreview(form.dataset.page, w);
+      save();
+      rerenderWidget(form.dataset.page, form.dataset.id);
+      return;
+    }
+    if (target.dataset.wfield === "title") w.title = target.value.slice(0, 60);
+    else if (target.dataset.wfield === "w") { w.w = U.clamp(Math.round(U.num(target.value, 3)), 1, 12); $("#outW").textContent = w.w; }
+    else if (target.dataset.wfield === "h") { w.h = U.clamp(Math.round(U.num(target.value, 2)), 1, 8); $("#outH").textContent = w.h; }
+    else if (target.dataset.wprop) {
+      const k = target.dataset.wprop, t = target.dataset.type;
+      if (t === "checkbox") w.props[k] = target.checked;
+      else if (t === "number") w.props[k] = target.value === "" ? "" : U.num(target.value, 0);
+      else w.props[k] = target.value;
+    }
+    save();
+    rerenderWidget(form.dataset.page, form.dataset.id);
+  }
+
+  /* ---------- fontes de dados: editor ---------- */
+  function openSourceEditor(id) {
+    const s = id ? state.sources.find(x => x.id === id) : { id: "", name: "", type: "rest", url: "", interval: 10, staleAfter: 0, enabled: true };
+    if (!s) return;
+    const typeOpts = Object.entries(DataHub.TYPES).map(([k, t]) => `<option value="${k}" ${s.type === k ? "selected" : ""}>${U.esc(t.label)}</option>`).join("");
+    openDrawer(`<div class="drawer-head"><div><strong>${id ? "Editar fonte" : "Nova fonte de dados"}</strong><small>Conector REST, WebSocket ou simulador</small></div>
+        <button type="button" class="icon-btn" data-action="drawer-close" aria-label="Fechar">✕</button></div>
+      <form class="drawer-form src-form" id="srcForm" data-id="${U.esc(s.id)}" novalidate>
+        <div class="field"><label for="sName">Nome</label><input id="sName" name="name" type="text" maxlength="40" required value="${U.esc(s.name)}" placeholder="ex.: API SCADA — Unidade A"></div>
+        <div class="field"><label for="sType">Tipo</label><select id="sType" name="type">${typeOpts}</select></div>
+        <div class="field" id="sUrlWrap"><label for="sUrl">URL</label><input id="sUrl" name="url" type="text" maxlength="500" value="${U.esc(s.url)}" autocomplete="off">
+          <small class="muted hint-text" id="sUrlHint"></small></div>
+        <div class="field-row">
+          <div class="field" id="sIntWrap"><label for="sInt">Intervalo (s)</label><input id="sInt" name="interval" type="number" min="1" max="3600" step="1" value="${U.esc(s.interval)}"></div>
+          <div class="field"><label for="sStale">Desatualizado após (s)</label><input id="sStale" name="staleAfter" type="number" min="0" max="86400" step="1" value="${U.esc(s.staleAfter)}">
+            <small class="muted hint-text">0 = automático</small></div>
+        </div>
+        <label class="check"><input type="checkbox" id="sEnabled" ${s.enabled ? "checked" : ""}> Fonte ativa</label>
+        <p class="muted hint-text">Não informe tokens ou senhas na URL: a configuração fica no navegador e pode ser exportada. Para APIs autenticadas, utilize um proxy (ver seção <strong>Integração</strong> do README).</p>
+        <p class="form-msg" id="srcMsg" role="status" aria-live="polite"></p>
+        <button type="submit" hidden></button>
+      </form>
+      <div class="drawer-foot">
+        <button type="button" class="btn" data-action="src-form-test">Testar conexão</button>
+        <button type="button" class="btn primary" id="srcSave">Salvar fonte</button>
+      </div>`, "source");
+    syncSourceForm();
+  }
+
+  function syncSourceForm() {
+    const type = $("#sType").value;
+    $("#sUrlWrap").hidden = type === "simulated";
+    $("#sIntWrap").hidden = type === "websocket";
+    $("#sUrl").placeholder = type === "websocket" ? "wss://servidor/coi/stream" : "https://servidor/api/coi ou dados.json";
+    $("#sUrlHint").textContent = type === "websocket"
+      ? "Cada mensagem recebida deve ser um JSON. Reconexão automática em caso de queda."
+      : "A URL é consultada a cada intervalo e deve responder JSON (com CORS liberado quando estiver em outro domínio).";
+    $("#srcMsg").textContent = "";
+  }
+
+  function readSourceForm() {
+    const f = $("#srcForm");
+    const raw = {
+      id: f.dataset.id || U.uid("src"),
+      name: $("#sName").value.trim(),
+      type: $("#sType").value,
+      url: $("#sUrl").value.trim(),
+      interval: $("#sInt").value,
+      staleAfter: $("#sStale").value,
+      enabled: $("#sEnabled").checked
+    };
+    if (!raw.name) return { error: "Informe o nome da fonte." };
+    if (raw.type === "simulated") raw.url = "";
+    const err = DataHub.urlCheck(raw.url, raw.type);
+    if (err) return { error: err };
+    return { source: Store.source(raw) };
+  }
+
+  function saveSourceForm() {
+    const data = readSourceForm();
+    if (data.error) { const m = $("#srcMsg"); m.className = "form-msg bad"; m.textContent = data.error; return; }
+    const src = data.source;
+    const i = state.sources.findIndex(s => s.id === src.id);
+    if (i >= 0) state.sources[i] = src; else state.sources.push(src);
+    DataHub.refresh(src);
+    save(true); restartSimulation(); closeDrawer(); render();
+    toast(`Fonte “${src.name}” ${i >= 0 ? "atualizada" : "cadastrada"}.`, "good");
+  }
+
+  function openSourceData(id) {
+    const src = state.sources.find(s => s.id === id);
+    if (!src) return;
+    const payload = DataHub.payload(id);
+    let body;
+    if (payload === undefined) body = `<p class="muted">Nenhum dado recebido ainda. Verifique o status da fonte ou use “Testar”.</p>`;
+    else {
+      const rows = DataHub.paths(payload).slice(0, 120).map(p => {
+        const v = DataHub.resolve(payload, p);
+        let txt = Array.isArray(v) ? `lista (${v.length})` : v && typeof v === "object" ? "objeto" : JSON.stringify(v);
+        if (txt && txt.length > 48) txt = txt.slice(0, 48) + "…";
+        return `<tr><td><code>${U.esc(p)}</code></td><td>${U.esc(txt)}</td></tr>`;
+      }).join("");
+      let json = JSON.stringify(payload, null, 2);
+      if (json.length > 20000) json = json.slice(0, 20000) + "\n…";
+      body = `<div class="group-title">Caminhos disponíveis</div>
+        <div class="table-wrap paths"><table><thead><tr><th>Caminho</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="group-title">Última leitura (JSON)</div><pre class="json">${U.esc(json)}</pre>`;
+    }
+    openDrawer(`<div class="drawer-head"><div><strong>${U.esc(src.name)}</strong><small>Dados recebidos da fonte</small></div>
+        <button type="button" class="icon-btn" data-action="drawer-close" aria-label="Fechar">✕</button></div>
+      <div class="drawer-form">${body}</div>`, "data");
+  }
+
+  /* ---------- ações ---------- */
+  function setView(view) {
+    if (!Views[view]) return;
+    ui.view = view;
+    closeDrawer();
+    render();
+    $("#view").focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+
+  function toggleEditing(force) {
+    ui.editing = typeof force === "boolean" ? force : !ui.editing;
+    if (!ui.editing) { closeDrawer(); save(true); toast("Alterações salvas neste navegador."); }
+    render();
+  }
+
+  const actions = {
+    "edit-on": () => toggleEditing(true),
+    "page-go": el => { state.activePage = el.dataset.page; save(); setView("dashboard"); },
+    "page-add": () => {
+      const name = (prompt("Nome da nova página:", "Nova página") || "").trim().slice(0, 30);
+      if (!name) return;
+      const id = slug(name) + "-" + Math.random().toString(36).slice(2, 5);
+      state.pages.push({ id, name, widgets: [] });
+      state.activePage = id;
+      save(true); render(); toast(`Página “${name}” criada.`);
+    },
+    "page-rename": () => {
+      const page = currentPage();
+      const name = (prompt("Novo nome da página:", page.name) || "").trim().slice(0, 30);
+      if (!name) return;
+      page.name = name; save(true); render();
+    },
+    "page-del": () => {
+      if (state.pages.length < 2) return;
+      const page = currentPage();
+      if (!confirm(`Excluir a página “${page.name}” e seus ${page.widgets.length} widgets?`)) return;
+      state.pages = state.pages.filter(p => p !== page);
+      state.activePage = state.pages[0].id;
+      save(true); render(); toast("Página excluída.");
+    },
+    "lib-open": openLibrary,
+    "lib-add": el => {
+      const def = WIDGETS[el.dataset.type];
+      if (!def) return;
+      const page = currentPage();
+      const d = U.clone(def.defaults);
+      const w = { id: U.uid(el.dataset.type), type: el.dataset.type, title: d.title, w: d.w, h: d.h, props: d.props };
+      page.widgets.push(w);
+      save(true); render();
+      openEditor(page.id, w.id);
+      const node = $(`.widget[data-id="${CSS.escape(w.id)}"]`);
+      if (node) node.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+    "w-edit": el => { const c = el.closest(".widget"); openEditor(c.dataset.page, c.dataset.id); },
+    "w-dup": el => {
+      const c = el.closest(".widget");
+      const { page, widget, index } = findWidget(c.dataset.page, c.dataset.id);
+      if (!widget) return;
+      const copy = U.clone(widget);
+      copy.id = U.uid(widget.type); copy.title = widget.title + " (cópia)";
+      page.widgets.splice(index + 1, 0, copy);
+      save(true); render(); toast("Widget duplicado.");
+    },
+    "w-del": el => {
+      const c = el.closest(".widget") || el;
+      const { page, widget } = findWidget(c.dataset.page, c.dataset.id);
+      if (!widget || !confirm(`Excluir o widget “${widget.title}”?`)) return;
+      page.widgets = page.widgets.filter(w => w !== widget);
+      closeDrawer(); save(true); render(); toast("Widget excluído.");
+    },
+    "drawer-close": closeDrawer,
+    "src-add": () => openSourceEditor(null),
+    "src-edit": el => openSourceEditor(el.dataset.src),
+    "src-view": el => openSourceData(el.dataset.src),
+    "src-test": async el => {
+      const src = state.sources.find(s => s.id === el.dataset.src);
+      if (!src) return;
+      el.disabled = true; el.textContent = "Testando…";
+      const r = await DataHub.test(src);
+      el.disabled = false; el.textContent = "Testar";
+      if (r.ok) toast(`${src.name}: conexão OK (${r.latency} ms, ${DataHub.paths(r.payload).length} campos).`, "good");
+      else toast(`${src.name}: ${r.error}`, "bad");
+    },
+    "src-del": el => {
+      const src = state.sources.find(s => s.id === el.dataset.src);
+      if (!src) return;
+      const bound = Views.boundWidgets(state, src.id);
+      const msg = bound.length ? `Excluir a fonte “${src.name}”? ${bound.length} widget(s) serão desvinculados e manterão os últimos valores.` : `Excluir a fonte “${src.name}”?`;
+      if (!confirm(msg)) return;
+      bound.forEach(b => { delete b.widget.binding; live.delete(liveKey(b.page.id, b.widget.id)); });
+      state.sources = state.sources.filter(s => s !== src);
+      save(true); restartSimulation(); render(); toast("Fonte excluída.");
+    },
+    "src-form-test": async el => {
+      const data = readSourceForm();
+      const out = $("#srcMsg");
+      if (data.error) { out.className = "form-msg bad"; out.textContent = data.error; return; }
+      el.disabled = true; out.className = "form-msg"; out.textContent = "Testando conexão…";
+      const r = await DataHub.test(data.source);
+      el.disabled = false;
+      if (r.ok) { out.className = "form-msg good"; out.textContent = `Conexão OK · ${r.latency} ms · ${DataHub.paths(r.payload).length} campos encontrados.`; }
+      else { out.className = "form-msg bad"; out.textContent = r.error; }
+    },
+    "wall-tv": () => {
+      const frame = $(".wall-frame");
+      if (frame && frame.requestFullscreen) frame.requestFullscreen().catch(() => toast("Tela cheia indisponível neste navegador.", "bad"));
+    },
+    "row-add": el => {
+      const coll = el.dataset.coll;
+      const blank = coll === "architecture"
+        ? { layer: "Campo", system: "Novo sistema", vendor: "", protocol: "", status: "Pendente" }
+        : { item: "Novo item", qty: 1, location: "", status: "Planejado", notes: "" };
+      state[coll].push(blank); save(true); render();
+      const inputs = $$(`[data-coll="${coll}"][data-key="${coll === "architecture" ? "system" : "item"}"]`);
+      if (inputs.length) { inputs[inputs.length - 1].focus(); inputs[inputs.length - 1].select(); }
+    },
+    "row-del": el => {
+      state[el.dataset.coll].splice(+el.dataset.row, 1); save(true); render();
+    },
+    "export": () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "coi-forge-config.json";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast("Configuração exportada.");
+    },
+    "import": () => $("#importFile").click(),
+    "reset": () => {
+      if (!confirm("Restaurar a configuração padrão? As alterações locais serão perdidas.")) return;
+      state = Store.reset(); ui.editing = false; restartSimulation(true); render(); toast("Configuração padrão restaurada.");
+    }
+  };
+
+  document.addEventListener("click", e => {
+    const nav = e.target.closest("#nav [data-view]");
+    if (nav) { setView(nav.dataset.view); return; }
+    const el = e.target.closest("[data-action]");
+    if (el && el.tagName !== "SELECT" && el.tagName !== "INPUT" && actions[el.dataset.action]) {
+      e.preventDefault();
+      actions[el.dataset.action](el);
+    }
+  });
+
+  document.addEventListener("input", e => {
+    const t = e.target;
+    if (t.closest("#srcForm")) { syncSourceForm(); return; }
+    if (t.closest("#drawer")) return onEditorInput(t);
+    if (t.dataset.action === "cell") {
+      const row = state[t.dataset.coll][+t.dataset.row];
+      if (row) { row[t.dataset.key] = t.type === "number" ? Math.max(0, U.num(t.value, 0)) : t.value; save(); }
+      return;
+    }
+    if (t.dataset.setting) {
+      const s = state.settings, k = t.dataset.setting;
+      if (k === "simulate") s.simulate = t.checked;
+      else if (k === "refresh") s.refresh = U.clamp(Math.round(U.num(t.value, 5)), 2, 60);
+      else s[k] = t.value;
+      applyTheme(); save();
+      if (k === "simulate" || k === "refresh") restartSimulation();
+    }
+  });
+
+  document.addEventListener("change", e => {
+    const t = e.target, a = t.dataset.action;
+    if (a === "src-toggle") {
+      const src = state.sources.find(s => s.id === t.dataset.src);
+      if (src) { src.enabled = t.checked; save(true); restartSimulation(); updateLive(); toast(`${src.name} ${src.enabled ? "ativada" : "desativada"}.`); }
+      return;
+    }
+    const vw = state.videowall;
+    if (a === "cell") { if (t.tagName === "SELECT") render(); return; }
+    if (a === "tile-src") { vw.tiles[+t.dataset.index] = { source: t.value }; }
+    else if (a === "wall-rows") vw.rows = U.clamp(+t.value, 1, 4);
+    else if (a === "wall-cols") vw.cols = U.clamp(+t.value, 1, 6);
+    else if (a === "wall-labels") vw.labels = t.checked;
+    else if (t.dataset.setting === "refresh") { t.value = state.settings.refresh; return; }
+    else return;
+    while (vw.tiles.length < vw.rows * vw.cols) vw.tiles.push({ source: "none" });
+    save(true); render();
+  });
+
+  $("#importFile").addEventListener("change", e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast("Arquivo muito grande (máx. 2 MB).", "bad"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!Store.valid(data)) throw new Error("schema");
+        state = Store.normalize(data);
+        save(true); restartSimulation(true); render(); toast("Configuração importada com sucesso.", "good");
+      } catch (err) { toast("Arquivo inválido para o COI Forge.", "bad"); }
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- drag-and-drop (reordenar) ---------- */
+  document.addEventListener("dragstart", e => {
+    const el = e.target.closest && e.target.closest('.widget[draggable="true"]');
+    if (!el) return;
+    dragId = el.dataset.id;
+    el.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", dragId);
+  });
+  document.addEventListener("dragover", e => {
+    const t = e.target.closest && e.target.closest(".grid .widget");
+    if (!dragId || !t || t.dataset.id === dragId) return;
+    e.preventDefault();
+    const r = t.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    $$(".drop-before, .drop-after").forEach(x => x.classList.remove("drop-before", "drop-after"));
+    t.classList.add(after ? "drop-after" : "drop-before");
+  });
+  document.addEventListener("drop", e => {
+    const t = e.target.closest && e.target.closest(".grid .widget");
+    if (!dragId || !t) return;
+    e.preventDefault();
+    const page = currentPage();
+    const from = page.widgets.findIndex(w => w.id === dragId);
+    if (from < 0) return;
+    const [moved] = page.widgets.splice(from, 1);
+    let to = page.widgets.findIndex(w => w.id === t.dataset.id);
+    if (t.classList.contains("drop-after")) to += 1;
+    page.widgets.splice(to, 0, moved);
+    save(true); render();
+  });
+  document.addEventListener("dragend", () => {
+    dragId = null;
+    $$(".dragging, .drop-before, .drop-after").forEach(x => x.classList.remove("dragging", "drop-before", "drop-after"));
+  });
+
+  /* ---------- redimensionamento ---------- */
+  document.addEventListener("pointerdown", e => {
+    const handle = e.target.closest && e.target.closest(".resize-handle");
+    if (!handle) return;
+    e.preventDefault();
+    const el = handle.closest(".widget"), grid = el.parentElement;
+    const { widget: w } = findWidget(el.dataset.page, el.dataset.id);
+    if (!w) return;
+    const cs = getComputedStyle(grid);
+    const gap = parseFloat(cs.columnGap) || 14;
+    const colW = (grid.clientWidth - gap * 11) / 12 + gap;
+    const rowH = (parseFloat(cs.gridAutoRows) || 88) + (parseFloat(cs.rowGap) || gap);
+    const start = { x: e.clientX, y: e.clientY, w: w.w, h: w.h };
+    el.draggable = false;
+    el.classList.add("resizing");
+    handle.setPointerCapture(e.pointerId);
+    const move = ev => {
+      w.w = U.clamp(Math.round(start.w + (ev.clientX - start.x) / colW), 1, 12);
+      w.h = U.clamp(Math.round(start.h + (ev.clientY - start.y) / rowH), 1, 8);
+      el.style.setProperty("--w", w.w);
+      el.style.setProperty("--h", w.h);
+      el.dataset.size = `${w.w} × ${w.h}`;
+    };
+    const up = () => {
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
+      save(true);
+      rerenderWidget(el.dataset.page, el.dataset.id);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
+  });
+
+  document.addEventListener("submit", e => {
+    if (e.target.id === "srcForm") { e.preventDefault(); saveSourceForm(); }
+  });
+  document.addEventListener("click", e => {
+    if (e.target.closest("#srcSave")) saveSourceForm();
+  });
+
+  /* ---------- topo / atalhos ---------- */
+  $("#editBtn").addEventListener("click", () => toggleEditing());
+  $("#themeBtn").addEventListener("click", () => {
+    state.settings.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    save(true); render();
+  });
+  $("#fullBtn").addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+  });
+  $("#liveToggle").addEventListener("click", () => {
+    state.settings.simulate = !state.settings.simulate;
+    save(true); restartSimulation(); applyTheme();
+    if (ui.view === "configuracoes") render();
+  });
+  $("#menuBtn").addEventListener("click", () => {
+    $("#sidebar").classList.toggle("open");
+    $("#scrim").hidden = !$("#sidebar").classList.contains("open");
+  });
+  $("#scrim").addEventListener("click", closeDrawer);
+  $("#srcPill").addEventListener("click", () => setView("dados"));
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && (ui.drawer || $("#sidebar").classList.contains("open"))) closeDrawer();
+  });
+  document.addEventListener("fullscreenchange", () => {
+    document.body.classList.toggle("presenting", document.fullscreenElement === document.documentElement);
+    setTimeout(fitStages, 60);
+  });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => state.settings.theme === "auto" && applyTheme());
+
+  /* ---------- init ---------- */
+  DataHub.on((id, kind) => {
+    if (kind === "data") onSourceData(id);
+    updateLive();
+  });
+  render();
+  restartSimulation();
+})();
+  </script>
+</body>
+</html>
