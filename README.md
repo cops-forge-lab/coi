@@ -4,9 +4,9 @@
 
 **Plataforma web configurável para estruturação de Centros de Operações Integradas**
 
-Dashboards · KPIs · Alarmes · Videowall com playlists · Modo TV · Fontes de dados ao vivo · Arquitetura de integração · Infraestrutura
+Dashboards · KPIs · Alarmes · Videowall · Fontes de dados ao vivo · Arquitetura de integração · Infraestrutura
 
-![versão](https://img.shields.io/badge/versão-0.4.1-6d28d9) ![stack](https://img.shields.io/badge/stack-HTML%20%7C%20CSS%20%7C%20JavaScript-0f172a) ![dependências](https://img.shields.io/badge/dependências-zero-0f9f6e) ![arquivos](https://img.shields.io/badge/arquivos-4-64708a) ![licença](https://img.shields.io/badge/licença-MIT-64708a)
+![versão](https://img.shields.io/badge/versão-0.3.0-6d28d9) ![stack](https://img.shields.io/badge/stack-HTML%20%7C%20CSS%20%7C%20JavaScript-0f172a) ![dependências](https://img.shields.io/badge/dependências-zero-0f9f6e) ![arquivos](https://img.shields.io/badge/arquivos-4-64708a) ![licença](https://img.shields.io/badge/licença-MIT-64708a)
 
 </div>
 
@@ -28,13 +28,10 @@ A plataforma apoia a fase de concepção de um COI: alinhar com a operação qua
 | **Editor visual** | Adicionar, configurar, duplicar e excluir widgets; arrastar para reordenar; redimensionar pelo canto do card |
 | **Fontes de dados** | Conectores REST (consulta periódica), WebSocket (tempo real) e simulador; status, latência, teste de conexão e visualização dos campos recebidos |
 | **Dados ao vivo** | Cada widget pode ser vinculado a uma fonte e a um caminho no JSON; selo “Ao vivo” / “Desatualizado” e destaque visual quando a fonte para de atualizar |
-| **Videowall** | Vários layouts salvos (ex.: Operação normal, Contingência, Reunião de turno); matriz de até 6 × 8 monitores; cada tela tem uma **playlist** de páginas e widgets que alternam sozinhos |
-| **Editor do videowall** | Layout **totalmente editável**: mover, redimensionar e **mesclar monitores**, dividir, duplicar, criar e remover telas; renomear direto no rótulo; posição exata por coluna/linha; modelos com destaque; proporção do monitor, moldura e fundo; desfazer/refazer e atalhos de teclado |
-| **Modo TV** | Videowall em tela inteira, sem menus, aberto direto por link (`?tv=1&layout=<id>`) no computador da sala; mantém a tela ligada quando o navegador permite |
-| **Rotação de páginas** | Alternância automática das páginas do dashboard, com pausa ao interagir e retomada automática |
+| **Videowall** | Matriz de até 4 × 6 telas; cada tela recebe uma página completa ou um widget; modo TV em tela cheia |
 | **Arquitetura** | Mapa de integração por camada (campo → visualização) e inventário editável de sistemas, fornecedores, protocolos e status |
 | **Infraestrutura** | Inventário editável de equipamentos físicos do COI (monitores, controladora, estações, servidores, nobreaks, rede) |
-| **Configurações** | Nome, cor de destaque, tema claro/escuro, simulação de dados, rotação de páginas e importação/exportação de JSON |
+| **Configurações** | Nome, cor de destaque, tema claro/escuro, simulação de dados e importação/exportação de JSON |
 
 ## Estrutura do repositório
 
@@ -81,87 +78,14 @@ Requer Node.js 18 ou superior. A aplicação em si não depende de Node.
 | `node coi-tools.mjs servidor [porta]` | Serve a aplicação em `http://localhost:8787` com API REST de teste (`/api/coi`) e WebSocket (`ws://localhost:8787/ws`) |
 | `node coi-tools.mjs validar [arquivo.json]` | Valida uma configuração exportada; sem arquivo, valida a configuração padrão do `index.html` |
 | `node coi-tools.mjs exemplo mock [saida.json] [porta]` | Gera configuração com a página Executivo via REST e demais widgets via WebSocket do servidor de teste (informe a porta se não for 8787) |
-| `node coi-tools.mjs exemplo 3x3 [saida.json]` | Gera configuração com um layout extra de videowall 3 × 3 com playlists (páginas, gráficos, alarmes e câmeras) |
-| `node coi-tools.mjs testar wall` | Testa o cálculo das playlists, a troca de matriz, a rotação e a migração de configurações v3 → v4 |
-| `node coi-tools.mjs verificar` | Confere a sintaxe do código do `index.html`, a configuração padrão, os exemplos e os testes — **rodar antes de cada commit** |
+| `node coi-tools.mjs exemplo 3x3 [saida.json]` | Gera configuração com videowall 3 × 3 (páginas, gráficos, alarmes e mosaico de câmeras) |
+| `node coi-tools.mjs verificar` | Confere a sintaxe do código do `index.html`, a configuração padrão e os exemplos — **rodar antes de cada commit** |
 
 Arquivos gerados são importados em **Configurações → Importar JSON**. Como o repositório não tem `.gitignore`, gere-os fora da pasta do projeto ou não os inclua no commit — principalmente configurações exportadas com endereços internos.
 
-## Videowall e modo TV
-
-### Layouts
-
-Cada layout é uma montagem completa do videowall: a **matriz de monitores** (linhas × colunas) e as **telas** posicionadas sobre ela. Uma tela pode ocupar um monitor ou vários (tela mesclada). A configuração padrão traz três: **Operação normal** (4 × 2 com destaque 2 × 2), **Contingência** (2 × 2) e **Reunião de turno** (2 × 2 com faixa superior).
-
-Em **Videowall**, use o seletor **Layout** para trocar e os botões **＋ Novo**, **Duplicar**, **Renomear** e **Excluir** para gerenciar (até 20 layouts; o último não pode ser excluído). **Linhas** (1–6) e **Colunas** (1–8) mudam a matriz preservando cada tela pela posição; o que passar da borda é cortado e, se alguma tela com conteúdo for ficar de fora, a plataforma pede confirmação.
-
-**Modelos:** 2×2, 3×2, 3×3, 4×2, 4×3 e os modelos com destaque **4×2 destaque**, **3×3 destaque**, **4×3 central** e **3×2 faixa**. Ao aplicar um modelo, as telas atuais são redistribuídas na ordem de leitura (esquerda → direita, cima → baixo), começando pelas que têm conteúdo.
-
-**Aparência do layout:** proporção do monitor (16:9, 16:10, 21:9, 4:3 ou 9:16 em pé), espessura da **moldura** entre monitores (0–24 px), cor de **fundo**, **emendas** desenhadas dentro das telas mescladas (simulam a borda física das TVs), identificação das telas e barra de progresso no modo TV.
-
-### Editor do layout
-
-Clique em **✎ Editar layout** (ou **Editar COI** na barra superior). Aparece a barra **MODO EDIÇÃO** e a grade de monitores fica visível.
-
-| Ação | Como fazer |
-|---|---|
-| Mover | Arraste a tela (ou a alça ⠿). Soltar sobre outra tela **do mesmo tamanho** troca as duas de lugar |
-| Redimensionar / mesclar monitores | Arraste ⤡ no canto inferior direito; a tela passa a ocupar vários monitores |
-| Dividir | ⊞ separa uma tela mesclada em telas de um monitor; a primeira mantém o conteúdo |
-| Criar | **＋** em uma célula vazia ou **＋ Adicionar tela** (primeira célula livre) |
-| Duplicar | ⧉ ou `Ctrl+D` (no mesmo tamanho quando há espaço; senão em 1 × 1) |
-| Remover | ✕ ou `Del` |
-| Renomear | Clique no nome da TV no rótulo, digite e tecle `Enter` (vazio volta ao nome automático) |
-| Posição exata e aparência | ⚙ abre o painel da tela: nome, mostrar rótulo, **Encaixar** ou **Preencher**, coluna/linha/largura/altura e a playlist |
-| Teclado | Selecione a tela: setas movem, `Shift` + setas redimensionam, `Enter` abre o painel, `Esc` tira a seleção |
-| Desfazer / refazer | Botões da barra ou `Ctrl+Z` / `Ctrl+Shift+Z` (até 40 passos; vale também para o editor de dashboards) |
-| Restaurar layout | Volta o layout para a configuração padrão (apenas layouts que existem no padrão) |
-
-Durante o arraste aparece uma prévia **verde** (posição válida) ou **vermelha** (fora da matriz ou sobre outra tela). Telas nunca se sobrepõem; células sem tela aparecem como **SEM SINAL** fora do modo de edição. Widgets ocupam toda a área da tela, inclusive em telas mescladas; páginas completas usam o ajuste escolhido (**Encaixar** mostra tudo, **Preencher** corta as bordas).
-
-### Playlists por tela
-
-1. Passe o mouse sobre a tela e clique em **⚙ Playlist** (no modo de edição, ⚙).
-2. Use **＋ Adicionar conteúdo** e escolha uma página completa ou um widget para cada item.
-3. Defina a duração de cada item (5 a 3.600 s) e a ordem com ↑ e ↓. Até 12 itens por tela.
-
-Telas com playlist mostram no rótulo a posição e o tempo restante (ex.: `2/4 · 8 s`) e uma barra de progresso. A troca é calculada pelo horário, e não por contador: as telas ficam sincronizadas e, se o navegador atrasar, a próxima verificação corrige. Só a tela que muda é redesenhada. Em playlists de até 4 itens com página externa (Power BI, Grafana), os itens ficam carregados e alternam por visibilidade, sem recarregar o painel.
-
-Para uma tela fixa, basta escolher o conteúdo direto no seletor da tela.
-
-### Modo TV
-
-- **▶ Modo TV** abre o layout atual em tela cheia, sem menus. Mova o mouse ou pressione `Esc` para ver o botão **Sair do modo TV**.
-- **Copiar link do modo TV** gera um endereço que abre o layout direto no modo TV:
-
-  ```text
-  https://<usuário-ou-organização>.github.io/<repositório>/?tv=1&layout=operacao-normal
-  ```
-
-  Se o layout informado não existir, o layout ativo é exibido com um aviso.
-- A opção **Progresso no modo TV** mostra ou oculta as barras de progresso na sala.
-- Enquanto o modo TV está aberto, a plataforma pede ao navegador para **não apagar a tela** (quando há suporte). Configure também a energia do sistema operacional para nunca desligar o monitor.
-
-### Computador do videowall
-
-O navegador só entra em tela cheia após um clique. Para o videowall abrir sozinho, use o modo quiosque do navegador:
-
-```bash
-chrome --kiosk "https://<usuário-ou-organização>.github.io/<repositório>/?tv=1&layout=operacao-normal"
-msedge --kiosk "https://<usuário-ou-organização>.github.io/<repositório>/?tv=1&layout=operacao-normal" --edge-kiosk-type=fullscreen
-```
-
-A configuração fica salva por navegador. Para o computador da sala usar os mesmos layouts: monte-os em uma estação, use **Configurações → Exportar JSON** e, no computador do videowall, **Importar JSON** uma única vez.
-
-### Rotação de páginas do dashboard
-
-Em **Configurações → Rotação de páginas**, ative a rotação, escolha as páginas (mínimo 2), o intervalo (10 a 3.600 s) e o tempo para retomar após interação (10 a 600 s). Durante a rotação, a barra superior mostra a próxima página e o tempo restante; clique no indicador para pausar ou retomar. Qualquer clique, rolagem ou tecla pausa a rotação, que volta sozinha. A rotação não funciona no modo de edição.
-
-Para abrir uma estação já em apresentação, sem o menu lateral e com a rotação ligada: `?view=dashboard&rotate=1`.
-
 ## Integração com fontes de dados
 
-Desde a v0.3 é possível alimentar os widgets com dados de **APIs REST** e **WebSocket**. Esta seção descreve como conectar fontes reais e o formato esperado.
+A v0.3 permite alimentar os widgets com dados de **APIs REST** e **WebSocket**. Esta seção descreve como conectar fontes reais e o formato esperado.
 
 ### Premissa
 
@@ -287,9 +211,6 @@ Tudo fica em um único `index.html`, organizado em seções comentadas, nesta or
 ├──────────────────────────────────────────────────────────────┤
 │ Store              — persistência, migração e utilitários    │
 ├──────────────────────────────────────────────────────────────┤
-│ Wall               — cálculo das playlists, modelos de       │
-│                      matriz e rotação (sem DOM, testável)    │
-├──────────────────────────────────────────────────────────────┤
 │ DataHub            — conectores REST, WebSocket e simulador; │
 │                      status, reconexão e testes              │
 ├──────────────────────────────────────────────────────────────┤
@@ -300,16 +221,15 @@ Tudo fica em um único `index.html`, organizado em seções comentadas, nesta or
 │                      arquitetura, infraestrutura, config.    │
 ├──────────────────────────────────────────────────────────────┤
 │ App                — estado, eventos, editor, drag-and-drop, │
-│                      dados ao vivo, videowall, modo TV,      │
-│                      rotação                                 │
+│                      redimensionamento, dados ao vivo        │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Para encontrar uma seção, procure no arquivo pelo título do comentário (ex.: `DataHub — fontes de dados`). As seções `U`, `Store` e `Wall` ficam entre os marcadores `@core-begin` e `@core-end` e não dependem do navegador: o `coi-tools.mjs` as carrega para testar playlists e migração.
+Para encontrar uma seção, procure no arquivo pelo título do comentário (ex.: `DataHub — fontes de dados`).
 
 #### Modelo de dados
 
-Todo o conteúdo da plataforma é um único objeto JSON (`version: 5`):
+Todo o conteúdo da plataforma é um único objeto JSON (`version: 3`):
 
 | Chave | Conteúdo |
 |---|---|
@@ -318,11 +238,7 @@ Todo o conteúdo da plataforma é um único objeto JSON (`version: 5`):
 | `sources[]` | `id`, `name`, `type` (`simulated`, `rest`, `websocket`), `url`, `interval`, `staleAfter`, `enabled` |
 | `pages[].widgets[]` | `id`, `type`, `title`, `w` (1–12), `h` (1–8), `props` e, opcionalmente, `binding` |
 | `pages[].widgets[].binding` | `source` (id da fonte) e `path` (caminho no JSON, ex.: `operacao.disponibilidade`) |
-| `videowall` | `activeLayout` e `layouts[]` (até 20) |
-| `videowall.layouts[]` | `id`, `name`, `rows` (1–6), `cols` (1–8), `aspect`, `bezel` (0–24), `seams`, `background`, `labels`, `progressTv`, `tiles[]` |
-| `videowall.layouts[].tiles[]` | `id`, `x`, `y` (posição na matriz, a partir de 0), `w`, `h` (monitores ocupados), `title`, `header`, `fit` (`contain`/`cover`), `items[]`; telas não podem se sobrepor nem sair da matriz |
-| `videowall.layouts[].tiles[].items[]` | 1 a 12 itens com `source` e `duration` (5–3.600 s; ignorada quando há um só item) |
-| `rotation` | `enabled`, `pages[]`, `interval` (10–3.600 s), `resumeAfter` (10–600 s) |
+| `videowall` | `rows`, `cols`, `labels`, `tiles[]` com `source` |
 | `architecture[]` | camada, sistema, fornecedor, protocolo, status |
 | `assets[]` | item, quantidade, local, status, observações |
 
@@ -350,7 +266,7 @@ Selo “Ao vivo” / “Desatualizado” (verificado a cada segundo)
 
 #### Persistência
 
-- O estado é salvo em `localStorage` (chave `coi-forge:state:v5`). Configurações v4, v3 e v2 (salvas no navegador ou importadas) são migradas automaticamente: cada tela antiga vira um retângulo 1 × 1 na mesma posição; na v3/v2 o videowall vira o layout **Layout principal** e a rotação é criada desligada com todas as páginas. Itens que apontam para páginas ou widgets excluídos passam a **Sem sinal**.
+- O estado é salvo em `localStorage` (chave `coi-forge:state:v3`). Configurações v2 são migradas automaticamente, recebendo as fontes padrão sem vínculos.
 - **Exportar JSON** gera o arquivo para versionar no repositório.
 - **Importar JSON** valida a estrutura antes de aplicar.
 - **Restaurar padrão** volta ao conteúdo do bloco `#coi-defaults`.
@@ -440,11 +356,8 @@ Tipos de campo disponíveis no editor: `text`, `number`, `textarea`, `select`, `
 |---|---|---|
 | v0.1 | Shell web responsivo e editor rápido de títulos | Concluída |
 | v0.2 | Widgets configuráveis, múltiplas páginas, drag-and-drop, redimensionamento, videowall, arquitetura, infraestrutura, import/export JSON | Concluída |
-| v0.3 | Conectores de dados (REST/WebSocket/simulador), vínculo de fonte por widget, indicador de dado desatualizado, servidor de teste local, repositório em 4 arquivos | Concluída |
-| v0.4.0 | Playlists por tela, layouts de videowall salvos, modelos de matriz, rotação de páginas, modo TV por link, tela sempre ligada | Concluída |
-| v0.4.1 | Layout do videowall totalmente editável: telas livres e mescladas, editor com arrastar/redimensionar/dividir, aparência do layout, desfazer/refazer | **Atual** |
-| v0.4.2 | Fonte MQTT sobre WebSocket, tempo de atualização por tópico, qualidade do dado — ver *Plano técnico da v0.4* | Planejada |
-| v0.4.3 | Gateway OPC UA (`bridge/`) e ambiente de laboratório — ver *Plano técnico da v0.4* | Planejada |
+| v0.3 | Conectores de dados (REST/WebSocket/simulador), vínculo de fonte por widget, indicador de dado desatualizado, servidor de teste local, repositório em 4 arquivos | **Atual** |
+| v0.4 | Playlists por tela, layouts de videowall salvos, rotação de páginas, modo TV por link, fonte MQTT (WebSocket) e gateway OPC UA — ver *Plano técnico da v0.4* abaixo | Em planejamento |
 | v0.5 | Histórico de alarmes, reconhecimento (ack) e registro de turno | Planejada |
 | v0.6 | Perfis de acesso (operador, supervisor, gestor) e modo somente leitura | Planejada |
 | v1.0 | Plataforma configurável de COI com integração a fontes reais | Planejada |
@@ -456,7 +369,7 @@ Tipos de campo disponíveis no editor: `text`, `number`, `textarea`, `select`, `
 
 **Tema:** operação contínua do videowall e conectividade industrial (MQTT e OPC UA)  
 **Base:** v0.3.0 (fontes de dados REST/WebSocket e indicador ao vivo)  
-**Status:** etapas 1 a 3 (videowall, modo TV e rotação) **entregues na v0.4.0**; editor de layout livre (antes fora do escopo: “mesclar telas”) **entregue na v0.4.1**; etapas 4 e 5 (MQTT e OPC UA) planejadas como v0.4.2 e v0.4.3. Item opcional T12 (configuração por URL) não incluído  
+**Status:** planejado — documento de referência para implementação  
 **Estrutura do repositório:** arquivo único (`index.html` com seções `Store`, `DataHub`, `Widgets`, `Views`, `App`), `coi-tools.mjs`, `README.md` e `LICENSE`. Os novos módulos da v0.4 entram como **novas seções do `index.html`**, e os novos testes como **comandos do `coi-tools.mjs`**. A única pasta nova é `bridge/` (gateway OPC UA), por ser um serviço separado com dependência própria.
 
 ---
@@ -1075,78 +988,6 @@ Cada etapa deve terminar com a aplicação funcionando e pode virar um commit pr
 
 <details>
 <summary><strong>Changelog</strong></summary>
-
-#### [0.4.1] — 2026-10-28
-
-Versão focada em deixar o **layout do videowall totalmente editável**, no mesmo espírito do editor do videowall COE Holambra: tudo o que está na tela pode ser movido, redimensionado, duplicado, removido e renomeado, com desfazer/refazer.
-
-##### Adicionado
-- **Telas livres sobre a matriz:** cada tela é um retângulo de monitores; uma tela pode ocupar vários monitores (**mesclar**) e células sem tela ficam “sem sinal”.
-- **Modo edição do videowall** com barra própria (**MODO EDIÇÃO**, ＋ Adicionar tela, Desfazer, Refazer, Restaurar layout) e grade de monitores visível.
-- Arrastar para **mover** (encaixe nas células; soltar sobre tela do mesmo tamanho troca as duas) e alça ⤡ para **redimensionar/mesclar**, com prévia verde/vermelha.
-- Ações por tela: ⚙ configurar, ⧉ duplicar, ⊞ dividir em 1 × 1, ✕ remover; ＋ cria tela em célula vazia.
-- **Renomear direto no rótulo** da TV (vazio volta ao nome automático).
-- Painel da tela com nome, mostrar rótulo, ajuste **Encaixar/Preencher**, posição e tamanho numéricos (com validação) e a playlist.
-- **Aparência do layout:** proporção do monitor (16:9, 16:10, 21:9, 4:3, 9:16), moldura 0–24 px, cor de fundo e emendas nas telas mescladas.
-- Novos modelos com destaque: **4×2 destaque**, **3×3 destaque**, **4×3 central** e **3×2 faixa**; ao aplicar, o conteúdo é redistribuído na ordem de leitura.
-- **Desfazer/refazer** (até 40 passos, `Ctrl+Z` / `Ctrl+Shift+Z`), também nos dashboards.
-- Atalhos no editor do videowall: setas movem, `Shift`+setas redimensionam, `Del` remove, `Ctrl+D` duplica, `Enter` abre o painel, `Esc` tira a seleção.
-- Funções de geometria na seção `Wall` (encaixe, mover/trocar, redimensionar, dividir, modelos, célula livre) cobertas por `node coi-tools.mjs testar wall` (19 casos).
-
-##### Alterado
-- **Formato `version: 5`:** telas do videowall com `id`, `x`, `y`, `w`, `h`, `title`, `header`, `fit`; layout com `aspect`, `bezel`, `seams` e `background`. Matriz ampliada para até 6 × 8 monitores.
-- Widgets dentro do videowall passam a ocupar toda a área da tela, acompanhando a proporção (inclusive em telas mescladas).
-- Configuração padrão: **Operação normal** passa a 4 × 2 com destaque 2 × 2 e **Reunião de turno** ganha faixa superior 2 × 1.
-- Validador aceita v5 (v2 a v4 com aviso) e verifica posição, tamanho, sobreposição, proporção, moldura, fundo e ajuste das telas.
-- `exemplo 3x3` gera layout com tela mesclada 2 × 2.
-- Roadmap: MQTT passa para a v0.4.2 e OPC UA para a v0.4.3.
-
-##### Migração
-- Configurações v4 (salvas no navegador ou importadas) são convertidas: cada tela vira um retângulo 1 × 1 na mesma posição, com moldura de 6 px, 16:9 e fundo escuro. Configurações v3 e v2 continuam sendo migradas.
-- Nova chave de armazenamento: `coi-forge:state:v5` (leitura de `v4`, `v3` e `v2` mantida).
-
-##### Limitações conhecidas
-- Arrastar e redimensionar telas usa mouse ou toque em telas largas; no celular, prefira o painel ⚙ (posição e tamanho numéricos).
-- Não é possível sobrepor telas (picture-in-picture) nem posicionar fora das células da matriz.
-- O conteúdo de cada página continua sendo editado no editor de dashboards; o editor do videowall cuida da montagem das telas.
-
-#### [0.4.0] — 2026-10-28
-
-Versão focada em **operação contínua do videowall**: cada tela passa a alternar conteúdos sozinha, os layouts podem ser salvos e trocados e o computador da sala abre direto no modo TV por um link. Corresponde às etapas 1 a 3 do plano técnico.
-
-##### Adicionado
-- **Layouts de videowall:** vários layouts com nome; criar, duplicar, renomear, excluir e trocar. A configuração padrão traz **Operação normal** (3 × 2, com playlists), **Contingência** (2 × 2) e **Reunião de turno** (2 × 2).
-- **Modelos de matriz** 2×2, 3×2, 3×3, 4×2 e 4×3; ao mudar a matriz, cada tela é preservada pela posição e há confirmação quando alguma tela com conteúdo ficaria de fora.
-- **Playlists por tela:** até 12 páginas ou widgets por tela, cada um com duração de 5 a 3.600 s; editor lateral com adicionar, remover, reordenar e resumo do ciclo.
-- Rótulo da tela com posição e tempo restante (ex.: `2/4 · 8 s`) e barra de progresso, com opção de exibir no modo TV.
-- **Modo TV** sem menus, com botão “Sair do modo TV” ao mover o mouse ou pressionar `Esc`.
-- **Link do modo TV** (`?tv=1&layout=<id>`) e botão **Copiar link do modo TV**; layout inexistente abre o layout ativo com aviso.
-- **Tela sempre ligada** (Wake Lock) durante o modo TV, refeita quando a aba volta a ficar visível; sem suporte, segue normalmente.
-- **Rotação de páginas** do dashboard: páginas, intervalo e tempo de retomada configuráveis; indicador na barra superior com a próxima página e o tempo restante; pausa por interação e pausa manual.
-- Modo apresentação por link (`?view=dashboard&rotate=1`), sem menu lateral e com rotação ligada.
-- Seção `Wall` no `index.html`, com o cálculo das playlists, dos modelos de matriz e da rotação, sem dependência do navegador.
-- Comando `node coi-tools.mjs testar wall` (11 casos: ordem e viradas, várias voltas, tempo restante, item único, limites de duração, troca de matriz, rotação e migração v3 → v4), incluído no `verificar`.
-
-##### Alterado
-- **Formato da configuração `version: 4`:** `videowall` passa a ter `activeLayout` e `layouts[]` com `tiles[].items[]`; nova chave `rotation`.
-- Troca de conteúdo calculada pelo horário de início do ciclo, e não por contador: as telas ficam sincronizadas e se corrigem sozinhas se o navegador atrasar.
-- Videowall atualiza **somente a tela que mudou**, com transição suave; widgets com dados ao vivo continuam atualizando dentro das playlists.
-- Playlists de até 4 itens com página externa mantêm os itens carregados e alternam por visibilidade, evitando recarregar Power BI ou Grafana.
-- O botão **▶ Modo TV** passa a abrir o modo TV completo, e não apenas a tela cheia da matriz.
-- Validador: aceita v4 (v2 e v3 com aviso) e verifica layouts, layout ativo, matriz × quantidade de telas, itens por tela, duração, itens que apontam para páginas ou widgets inexistentes e campos da rotação; recusa fontes com senha ou token.
-- `exemplo 3x3` passa a gerar um layout adicional 3 × 3 com playlists.
-- O servidor de teste informa o endereço do modo TV ao iniciar.
-
-##### Migração
-- Configurações v3 e v2 (no navegador ou importadas) são convertidas automaticamente: o videowall vira o layout **Layout principal**, cada tela vira uma playlist de um item e a rotação é criada desligada com todas as páginas.
-- Itens que apontam para páginas ou widgets inexistentes passam a **Sem sinal**.
-- Nova chave de armazenamento: `coi-forge:state:v4` (a leitura de `v3` e `v2` é mantida).
-
-##### Limitações conhecidas
-- O navegador só entra em tela cheia após um clique; para abrir sozinho, use o modo quiosque (seção **Videowall e modo TV**).
-- A configuração continua salva por navegador; o computador do videowall precisa importar o JSON uma vez. Carregar a configuração por URL (item opcional T12 do plano) não foi incluído.
-- A tela sempre ligada depende do suporte do navegador (Chrome e Edge atuais).
-- Não há mesclagem de telas, agenda de layouts por turno nem sincronização entre vários computadores.
 
 #### [0.3.0] — 2026-10-28
 
