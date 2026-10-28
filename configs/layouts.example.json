@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "presets": [
-    {"id": "normal", "name": "Operacao normal", "windows": []},
-    {"id": "incident", "name": "Incidente", "windows": []},
-    {"id": "crisis", "name": "Crise", "windows": []},
-    {"id": "maintenance", "name": "Manutencao", "windows": []}
-  ]
-}
