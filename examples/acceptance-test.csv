@@ -1,4 +1,0 @@
-id,categoria,teste,criterio,responsavel,status,evidencia
-AT-001,Video,Fonte critica no wall,Fonte exibida sem perda funcional,TBD,Pendente,
-AT-002,Layout,Preset incidente,Layout aplicado corretamente,TBD,Pendente,
-AT-003,Resiliencia,Retorno de energia,Sistema retorna ao estado definido,TBD,Pendente,

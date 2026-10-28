@@ -1,4 +1,0 @@
-id,nome,tipo,proprietario,criticidade,resolucao,fps,interface,simultanea,observacoes
-SRC-001,SCADA Principal,Aplicacao,TBD,Critica,TBD,TBD,TBD,Sim,
-SRC-002,Dashboard Operacional,Web,TBD,Alta,TBD,TBD,TBD,Sim,
-SRC-003,CFTV Prioritario,Video,TBD,Alta,TBD,TBD,TBD,Sim,
